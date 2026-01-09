@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Resize IMAGE – PicProTools</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+body{margin:0;font-family:Inter;background:#f2f5f9}
+.header{text-align:center;padding:28px 18px 10px}
+.header h1{margin:0;font-size:26px}
+.header p{color:#6b7280;font-size:14px}
+
+.card{max-width:480px;background:#fff;margin:10px auto;padding:22px;
+border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.08)}
+
+.upload-box{border:2px dashed #3b82f6;padding:22px;text-align:center;
+border-radius:16px;background:#f8fbff}
+.upload-box input{display:none}
+.upload-box label{background:#3b82f6;color:white;padding:14px 18px;
+border-radius:12px;display:inline-block;cursor:pointer;font-weight:600}
+
+.grid{display:grid;grid-template-columns:1fr 44px 1fr;gap:10px;margin-top:18px}
+
+input,select{width:100%;padding:12px;border-radius:12px;border:1px solid #d1d5db;font-size:15px}
+
+.lock{width:44px;height:44px;border-radius:50%;border:none;
+background:#3b82f6;color:#fff;font-size:18px;cursor:pointer}
+
+.section{margin-top:16px}
+.section label{font-size:13px;color:#555;display:block;margin-bottom:4px}
+
+.preview img{width:100%;border-radius:14px;margin-top:16px}
+.preview h3{margin:10px 0;font-size:15px;color:#4b5563}
+
+.btn-main{margin-top:18px;width:100%;background:#3b82f6;color:white;border:none;
+padding:16px;font-size:17px;border-radius:14px;font-weight:700}
+.download{background:#22c55e;margin-top:10px}
+.hidden{display:none}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  <h1>Resize IMAGE</h1>
+  <p>Resize JPG, PNG, WEBP images online</p>
+</div>
+
+<div class="card">
+
+  <div class="upload-box">
+    <input type="file" id="upload" accept="image/*">
+    <label for="upload">Select Image</label>
+  </div>
+
+  <div class="preview hidden" id="previewBox">
+    <h3>Original</h3>
+    <img id="previewImg">
+  </div>
+
+  <div class="preview hidden" id="afterBox">
+    <h3>Resized</h3>
+    <img id="afterImg">
+  </div>
+
+  <div class="grid">
+    <div>
+      <label>W</label>
+      <input type="number" id="w">
+    </div>
+    <button class="lock" id="lockBtn">🔒</button>
+    <div>
+      <label>H</label>
+      <input type="number" id="h">
+    </div>
+  </div>
+
+  <div class="section">
+    <label>Format</label>
+    <select id="format">
+      <option value="image/jpeg">JPG</option>
+      <option value="image/png">PNG</option>
+      <option value="image/webp">WEBP</option>
+    </select>
+  </div>
+
+  <button class="btn-main" id="resizeBtn">Resize Image</button>
+  <button class="btn-main download hidden" id="downloadBtn">Download Image</button>
+
+</div>
+
+<script>
+const upload = document.getElementById("upload");
+const previewImg = document.getElementById("previewImg");
+const afterImg = document.getElementById("afterImg");
+const previewBox = document.getElementById("previewBox");
+const afterBox = document.getElementById("afterBox");
+const wInput = document.getElementById("w");
+const hInput = document.getElementById("h");
+const lockBtn = document.getElementById("lockBtn");
+const resizeBtn = document.getElementById("resizeBtn");
+const downloadBtn = document.getElementById("downloadBtn");
+const format = document.getElementById("format");
+
+let ratio=1, resizedBlob, locked=true;
+
+upload.onchange = e=>{
+  const file = e.target.files[0];
+  const img = new Image();
+  img.src = URL.createObjectURL(file);
+  img.onload = ()=>{
+    previewImg.src = img.src;
+    previewBox.classList.remove("hidden");
+    afterBox.classList.add("hidden");
+    wInput.value = img.width;
+    hInput.value = img.height;
+    ratio = img.width/img.height;
+  }
+}
+
+lockBtn.onclick = ()=>{
+  locked=!locked;
+  lockBtn.textContent = locked?"🔒":"🔓";
+}
+
+wInput.oninput = ()=>{ if(locked) hInput.value=Math.round(wInput.value/ratio); }
+hInput.oninput = ()=>{ if(locked) wInput.value=Math.round(hInput.value*ratio); }
+
+resizeBtn.onclick = ()=>{
+  const img = new Image();
+  img.src = previewImg.src;
+  img.onload = ()=>{
+    const canvas = document.createElement("canvas");
+    canvas.width = wInput.value;
+    canvas.height = hInput.value;
+    canvas.getContext("2d").drawImage(img,0,0,canvas.width,canvas.height);
+    canvas.toBlob(blob=>{
+      resizedBlob = blob;
+      afterImg.src = URL.createObjectURL(blob);
+      afterBox.classList.remove("hidden");
+      downloadBtn.classList.remove("hidden");
+    },format.value,0.9);
+  }
+}
+
+downloadBtn.onclick = ()=>{
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(resizedBlob);
+  a.download = "resized-image";
+  a.click();
+}
+</script>
+
+</body>
+</html>
