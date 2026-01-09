@@ -2,165 +2,99 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Image Compressor – PicProTools</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<script src="https://unpkg.com/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
+<title>Image Compressor - PicProTools</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
 <style>
 body{
-  margin:0;
-  font-family:Inter,Arial,sans-serif;
-  background:#f5f7fb;
+ font-family:Inter,system-ui;
+ background:#f5f8ff;
+ margin:0;
+ padding:20px;
 }
 .container{
-  max-width:900px;
-  margin:auto;
-  padding:20px;
+ max-width:500px;
+ margin:auto;
+ background:#fff;
+ padding:25px;
+ border-radius:14px;
+ box-shadow:0 8px 25px rgba(0,0,0,.06);
 }
-.card{
-  background:white;
-  border-radius:14px;
-  padding:25px;
-  box-shadow:0 10px 25px rgba(0,0,0,.06);
+h2{text-align:center;margin-bottom:10px}
+.dropzone{
+ border:2px dashed #3b82f6;
+ padding:30px;
+ text-align:center;
+ border-radius:12px;
+ cursor:pointer;
+ background:#f0f6ff;
 }
-h1{
-  margin-top:0;
-}
-.upload{
-  border:2px dashed #2563eb;
-  border-radius:12px;
-  padding:40px;
-  text-align:center;
-  cursor:pointer;
-  margin-top:15px;
-}
-.upload:hover{
-  background:#eef4ff;
-}
-.preview{
-  margin-top:20px;
-  text-align:center;
-}
-.preview img{
-  max-width:100%;
-  border-radius:10px;
-  box-shadow:0 0 10px rgba(0,0,0,.1);
-}
-.controls{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:15px;
-  margin-top:20px;
-}
-input[type="range"], button{
-  padding:12px;
-  border-radius:8px;
-  border:1px solid #ddd;
-  font-size:16px;
-}
+input{width:100%;margin:12px 0}
 button{
-  background:#2563eb;
-  color:white;
-  border:none;
-  cursor:pointer;
+ width:100%;
+ padding:12px;
+ border:0;
+ border-radius:10px;
+ background:#2563eb;
+ color:#fff;
+ font-weight:600;
+ font-size:16px;
 }
-button:hover{
-  background:#1d4ed8;
-}
-#download{
-  display:none;
-  margin-top:20px;
-  background:#10b981;
-  text-align:center;
-  padding:12px;
-  border-radius:8px;
-  color:white;
-  text-decoration:none;
-  font-weight:bold;
-}
-.back{
-  display:inline-block;
-  margin-bottom:10px;
-  text-decoration:none;
-  color:#2563eb;
-  font-weight:bold;
-}
+.stats{margin-top:12px;font-size:14px;color:#444}
 </style>
 </head>
-
 <body>
 
 <div class="container">
-  <a href="/PicProTools/" class="back">← Back to PicProTools</a>
+<h2>Compress Image</h2>
 
-  <div class="card">
-    <h1>Image Compressor</h1>
-    <p>Reduce image size without losing quality — free & private</p>
+<div class="dropzone" onclick="file.click()">
+Click or Drop Image Here
+</div>
 
-    <div class="upload" onclick="fileInput.click()">
-      <input type="file" id="fileInput" hidden accept="image/*">
-      <p>Click to upload or drop an image</p>
-    </div>
+<input type="file" id="file" accept="image/*" hidden>
 
-    <div class="preview" id="preview"></div>
+<label>Quality: <span id="qv">70</span>%</label>
+<input type="range" id="quality" value="70">
 
-    <div class="controls">
-      <label for="quality">Quality: <span id="qualityValue">0.8</span></label>
-      <input type="range" id="quality" min="0.1" max="1" step="0.05" value="0.8">
-      <button onclick="compress()">Compress</button>
-    </div>
+<button onclick="compress()">Compress & Download</button>
 
-    <a id="download">Download</a>
-  </div>
+<div class="stats" id="stats"></div>
 </div>
 
 <script>
-let originalFile;
+quality.oninput=()=>qv.innerText=quality.value;
 
-fileInput.onchange = () => {
-  originalFile = fileInput.files[0];
-  if(!originalFile) return;
-  const img = document.createElement("img");
-  img.src = URL.createObjectURL(originalFile);
-  preview.innerHTML = "";
-  preview.appendChild(img);
-};
+let imgFile;
+file.onchange=e=>imgFile=e.target.files[0];
 
-quality.oninput = () => {
-  document.getElementById("qualityValue").innerText = quality.value;
-};
+function compress(){
+ if(!imgFile) return alert("Select image first");
 
-async function compress(){
-  if(!originalFile) return alert("Please upload an image");
-  
-  const options = {
-    maxSizeMB: 1,
-    maxWidthOrHeight: 4000,
-    useWebWorker: true,
-    initialQuality: parseFloat(quality.value)
-  };
+ const img=new Image();
+ img.src=URL.createObjectURL(imgFile);
 
-  try {
-    const compressedFile = await imageCompression(originalFile, options);
-    const url = URL.createObjectURL(compressedFile);
+ img.onload=()=>{
+  const canvas=document.createElement("canvas");
+  canvas.width=img.width;
+  canvas.height=img.height;
+  const ctx=canvas.getContext("2d");
+  ctx.drawImage(img,0,0);
 
-    const a = document.getElementById("download");
-    a.href = url;
-    a.download = "compressed_" + originalFile.name;
-    a.style.display = "block";
-    a.innerText = "Download Compressed Image";
+  canvas.toBlob(blob=>{
+   const a=document.createElement("a");
+   a.href=URL.createObjectURL(blob);
+   a.download="compressed.jpg";
+   a.click();
 
-    // Show preview
-    const img = document.createElement("img");
-    img.src = url;
-    preview.innerHTML = "";
-    preview.appendChild(img);
-
-  } catch (error) {
-    alert("Compression failed: " + error);
-  }
+   stats.innerHTML=`
+   Original: ${(imgFile.size/1024).toFixed(1)} KB<br>
+   Compressed: ${(blob.size/1024).toFixed(1)} KB
+   `;
+  },"image/jpeg",quality.value/100);
+ }
 }
 </script>
-
 </body>
 </html>
