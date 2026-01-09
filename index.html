@@ -288,7 +288,7 @@
 
         /* Tool Sections */
         .tools-section {
-            padding: 60px 0;
+            padding: 80px 0;
             background-color: var(--gray-light);
         }
 
@@ -315,7 +315,6 @@
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 25px;
-            margin-bottom: 80px;
         }
 
         .tool-card {
@@ -578,27 +577,27 @@
                 <div class="tool-icons">
                     <div class="tool-icon">
                         <i class="fas fa-image"></i>
-                        <span>Image Tools</span>
-                    </div>
-                    <div class="tool-icon">
-                        <i class="fas fa-file-alt"></i>
-                        <span>Text Tools</span>
-                    </div>
-                    <div class="tool-icon">
-                        <i class="fas fa-code"></i>
-                        <span>Code Tools</span>
-                    </div>
-                    <div class="tool-icon">
-                        <i class="fas fa-video"></i>
-                        <span>Video Tools</span>
-                    </div>
-                    <div class="tool-icon">
-                        <i class="fas fa-calculator"></i>
-                        <span>Calculate</span>
+                        <span>Image Converter</span>
                     </div>
                     <div class="tool-icon">
                         <i class="fas fa-compress-alt"></i>
-                        <span>Compress</span>
+                        <span>Image Compressor</span>
+                    </div>
+                    <div class="tool-icon">
+                        <i class="fas fa-expand-alt"></i>
+                        <span>Image Resizer</span>
+                    </div>
+                    <div class="tool-icon">
+                        <i class="fas fa-crop-alt"></i>
+                        <span>Image Cropper</span>
+                    </div>
+                    <div class="tool-icon">
+                        <i class="fas fa-font"></i>
+                        <span>Image to Text</span>
+                    </div>
+                    <div class="tool-icon">
+                        <i class="fas fa-sync-alt"></i>
+                        <span>Rotator/Flipper</span>
                     </div>
                 </div>
             </div>
@@ -620,7 +619,7 @@
         </div>
     </section>
 
-    <!-- Image Tools Section -->
+    <!-- Image Tools Section (ONLY SECTION) -->
     <section class="tools-section" id="tools">
         <div class="container">
             <div class="section-header">
@@ -663,7 +662,7 @@
     </footer>
 
     <script>
-        // Tools data
+        // Image Tools data (ONLY image tools)
         const imageTools = [
             { name: "Image Converter", description: "Convert images between JPG, PNG, WebP, and more formats", icon: "fas fa-exchange-alt" },
             { name: "Image Compressor", description: "Reduce image file size without losing quality", icon: "fas fa-compress-alt" },
@@ -673,7 +672,7 @@
             { name: "Image Rotator/Flipper", description: "Rotate or flip images horizontally or vertically", icon: "fas fa-sync-alt" }
         ];
 
-        // All tools for search functionality
+        // All tools for search functionality (only image tools)
         const allTools = [...imageTools];
 
         // Mobile menu toggle
@@ -690,5 +689,4 @@
         // Close mobile menu when clicking a link
         document.querySelectorAll('.nav-links a').forEach(link => {
             link.addEventListener('click', () => {
-                navLinks.classList.remove('active');
-                mobileMenuBtn.innerHTML = '<i
+                navLinks.classList.remove('
