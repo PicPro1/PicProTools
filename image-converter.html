@@ -4,14 +4,15 @@
 <meta charset="UTF-8">
 <title>Image Converter – PicProTools</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script src="https://unpkg.com/utif@3.1.0/UTIF.min.js"></script>
 
 <style>
 body{
   margin:0;
-  background:#f5f7fb;
   font-family:Inter,Arial,sans-serif;
+  background:#f5f7fb;
 }
 .container{
   max-width:900px;
@@ -19,23 +20,24 @@ body{
   padding:20px;
 }
 .card{
-  background:#fff;
+  background:white;
   border-radius:14px;
-  padding:20px;
-  box-shadow:0 10px 25px rgba(0,0,0,.05);
+  padding:25px;
+  box-shadow:0 10px 25px rgba(0,0,0,.06);
 }
 h1{
-  font-size:26px;
+  margin-top:0;
 }
 .upload{
-  border:2px dashed #3b82f6;
+  border:2px dashed #2563eb;
   border-radius:12px;
   padding:40px;
   text-align:center;
   cursor:pointer;
+  margin-top:15px;
 }
 .upload:hover{
-  background:#f0f6ff;
+  background:#eef4ff;
 }
 .preview{
   margin-top:20px;
@@ -76,6 +78,14 @@ button:hover{
   border-radius:8px;
   color:white;
   text-decoration:none;
+  font-weight:bold;
+}
+.back{
+  display:inline-block;
+  margin-bottom:10px;
+  text-decoration:none;
+  color:#2563eb;
+  font-weight:bold;
 }
 </style>
 </head>
@@ -83,13 +93,15 @@ button:hover{
 <body>
 
 <div class="container">
+  <a href="/PicProTools/" class="back">← Back to PicProTools</a>
+
   <div class="card">
     <h1>Image Converter</h1>
-    <p>Convert images to JPG, PNG, WebP, PDF or TIFF — free & private</p>
+    <p>Convert images to JPG, PNG, WebP, PDF or TIFF — free & private.</p>
 
-    <div class="upload" onclick="file.click()">
-      <input type="file" id="file" hidden accept="image/*">
-      <p>Click or drop an image here</p>
+    <div class="upload" onclick="fileInput.click()">
+      <input type="file" id="fileInput" hidden accept="image/*">
+      <p>Click to upload or drop an image</p>
     </div>
 
     <div class="preview" id="preview"></div>
@@ -113,8 +125,10 @@ button:hover{
 <script>
 let originalFile;
 
-file.onchange = () => {
-  originalFile = file.files[0];
+fileInput.onchange = () => {
+  originalFile = fileInput.files[0];
+  if(!originalFile) return;
+
   const img = document.createElement("img");
   img.src = URL.createObjectURL(originalFile);
   preview.innerHTML = "";
@@ -122,9 +136,9 @@ file.onchange = () => {
 };
 
 async function convert(){
-  if(!originalFile) return alert("Upload an image");
+  if(!originalFile) return alert("Please upload an image");
 
-  const format = formatSelect = document.getElementById("format").value;
+  const format = document.getElementById("format").value;
   const img = new Image();
   img.src = URL.createObjectURL(originalFile);
 
@@ -141,7 +155,7 @@ async function convert(){
       const png = await pdf.embedPng(canvas.toDataURL("image/png"));
       page.drawImage(png,{x:0,y:0,width:img.width,height:img.height});
       const bytes = await pdf.save();
-      downloadBlob(bytes,"image.pdf");
+      downloadBlob(bytes,"image.pdf","application/pdf");
       return;
     }
 
@@ -149,19 +163,22 @@ async function convert(){
     if(format === "tiff"){
       const rgba = canvas.getContext("2d").getImageData(0,0,canvas.width,canvas.height).data;
       const tiff = UTIF.encodeImage(rgba,canvas.width,canvas.height);
-      downloadBlob(tiff,"image.tiff");
+      downloadBlob(tiff,"image.tiff","image/tiff");
       return;
     }
 
+    // JPG / PNG / WebP
     canvas.toBlob(blob=>{
-      downloadBlob(blob,"converted-image");
+      const ext = format.split("/")[1];
+      downloadBlob(blob,"converted-image."+ext,format);
     },format,0.95);
   }
 }
 
-function downloadBlob(blob,name){
+function downloadBlob(data,name,mime){
   const a = document.getElementById("download");
-  a.href = URL.createObjectURL(new Blob([blob]));
+  const blob = new Blob([data],{type:mime});
+  a.href = URL.createObjectURL(blob);
   a.download = name;
   a.style.display="block";
   a.innerText="Download File";
