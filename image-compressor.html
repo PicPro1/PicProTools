@@ -1,107 +1,45 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Compress Image - PicProTools</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-
+<title>PicProTools - Image Compressor</title>
 <style>
-body{font-family:Inter,sans-serif;background:#f5f7fb;margin:0;padding:0}
-.container{max-width:420px;margin:40px auto;text-align:center}
-h1{font-size:26px}
-.btn{background:#3b82f6;color:#fff;border:none;padding:14px 28px;
-border-radius:10px;font-size:16px;cursor:pointer}
-.hidden{display:none}
-.preview-card{background:#fff;padding:15px;border-radius:12px;
-box-shadow:0 5px 15px rgba(0,0,0,.1);margin:20px}
-img{max-width:100%;border-radius:10px}
-.stat{display:flex;justify-content:center;gap:15px;margin:15px 0}
-.circle{width:80px;height:80px;border-radius:50%;
-border:8px solid #3b82f6;display:flex;align-items:center;justify-content:center;font-weight:700}
-.list{background:#fff;border-radius:12px;padding:10px;margin-top:20px;text-align:left}
-.list div{padding:12px;border-bottom:1px solid #eee}
+body{
+  font-family: Arial;
+  background:#f4f6fb;
+  text-align:center;
+}
+.card{
+  background:white;
+  max-width:420px;
+  margin:40px auto;
+  padding:30px;
+  border-radius:15px;
+  box-shadow:0 10px 30px rgba(0,0,0,.1);
+}
+.btn{
+  background:#4e87f5;
+  color:white;
+  padding:15px;
+  border:none;
+  border-radius:10px;
+  width:100%;
+  font-size:18px;
+  cursor:pointer;
+}
+.hidden{display:none;}
+img{max-width:100%; border-radius:10px;}
+.range{width:100%;}
+.download{background:#2ecc71;margin-top:10px;}
 </style>
 </head>
-
 <body>
 
-<div class="container">
+<div class="card">
+<h2>Compress IMAGE</h2>
 
-<h1>Compress IMAGE</h1>
-<p>Compress JPG, PNG or WEBP with best quality.</p>
+<input type="file" id="upload" accept="image/*">
 
-<input type="file" id="upload" accept="image/*" hidden>
-<button class="btn" onclick="upload.click()">Select Images</button>
-
-<div id="preview" class="preview-card hidden">
-  <img id="previewImg">
-  <p id="fileName"></p>
-  <button class="btn" onclick="compress()">Compress IMAGE</button>
-</div>
-
-<div id="result" class="hidden">
-  <button class="btn" onclick="download()">Download compressed IMAGE</button>
-
-  <div class="stat">
-    <div class="circle" id="savedPercent">0%</div>
-  </div>
-  <p id="sizeInfo"></p>
-
-  <div class="list">
-    <div>Resize IMAGE ➜</div>
-    <div>Crop IMAGE ➜</div>
-    <div>Rotate IMAGE ➜</div>
-    <div>Convert to JPG ➜</div>
-    <div>Watermark IMAGE ➜</div>
-  </div>
-</div>
-
-</div>
-
-<script>
-let originalFile, compressedBlob;
-
-upload.onchange = e => {
-  originalFile = e.target.files[0];
-  previewImg.src = URL.createObjectURL(originalFile);
-  fileName.innerText = originalFile.name;
-  preview.classList.remove("hidden");
-};
-
-function compress(){
-  const img = new Image();
-  img.src = URL.createObjectURL(originalFile);
-
-  img.onload = ()=>{
-    const canvas = document.createElement("canvas");
-    const scale = 0.7;
-    canvas.width = img.width * scale;
-    canvas.height = img.height * scale;
-
-    const ctx = canvas.getContext("2d");
-    ctx.drawImage(img,0,0,canvas.width,canvas.height);
-
-    canvas.toBlob(blob=>{
-      compressedBlob = blob;
-      const saved = Math.round(100 - (blob.size/originalFile.size*100));
-      savedPercent.innerText = saved+"%";
-      sizeInfo.innerText = 
-        (originalFile.size/1024/1024).toFixed(2)+" MB → "+
-        (blob.size/1024).toFixed(1)+" KB";
-
-      result.classList.remove("hidden");
-    }, "image/jpeg", 0.6);
-  }
-}
-
-function download(){
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(compressedBlob);
-  a.download = "compressed_"+originalFile.name;
-  a.click();
-}
-</script>
-
-</body>
-</html>
+<div>
+  <label><input type="radio" name="mode" value="auto" checked> Automatic</label>
