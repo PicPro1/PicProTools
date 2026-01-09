@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Image Converter – PicProTools</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="https://unpkg.com/utif@3.1.0/UTIF.min.js"></script>
+
+<style>
+body{
+  margin:0;
+  background:#f5f7fb;
+  font-family:Inter,Arial,sans-serif;
+}
+.container{
+  max-width:900px;
+  margin:auto;
+  padding:20px;
+}
+.card{
+  background:#fff;
+  border-radius:14px;
+  padding:20px;
+  box-shadow:0 10px 25px rgba(0,0,0,.05);
+}
+h1{
+  font-size:26px;
+}
+.upload{
+  border:2px dashed #3b82f6;
+  border-radius:12px;
+  padding:40px;
+  text-align:center;
+  cursor:pointer;
+}
+.upload:hover{
+  background:#f0f6ff;
+}
+.preview{
+  margin-top:20px;
+  text-align:center;
+}
+.preview img{
+  max-width:100%;
+  border-radius:10px;
+  box-shadow:0 0 10px rgba(0,0,0,.1);
+}
+.controls{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:15px;
+  margin-top:20px;
+}
+select,button{
+  padding:12px;
+  border-radius:8px;
+  border:1px solid #ddd;
+  font-size:16px;
+}
+button{
+  background:#2563eb;
+  color:white;
+  border:none;
+  cursor:pointer;
+}
+button:hover{
+  background:#1d4ed8;
+}
+#download{
+  display:none;
+  margin-top:20px;
+  background:#10b981;
+  text-align:center;
+  padding:12px;
+  border-radius:8px;
+  color:white;
+  text-decoration:none;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <div class="card">
+    <h1>Image Converter</h1>
+    <p>Convert images to JPG, PNG, WebP, PDF or TIFF — free & private</p>
+
+    <div class="upload" onclick="file.click()">
+      <input type="file" id="file" hidden accept="image/*">
+      <p>Click or drop an image here</p>
+    </div>
+
+    <div class="preview" id="preview"></div>
+
+    <div class="controls">
+      <select id="format">
+        <option value="image/jpeg">JPG</option>
+        <option value="image/png">PNG (Lossless)</option>
+        <option value="image/webp">WebP</option>
+        <option value="pdf">PDF</option>
+        <option value="tiff">TIFF</option>
+      </select>
+
+      <button onclick="convert()">Convert</button>
+    </div>
+
+    <a id="download">Download</a>
+  </div>
+</div>
+
+<script>
+let originalFile;
+
+file.onchange = () => {
+  originalFile = file.files[0];
+  const img = document.createElement("img");
+  img.src = URL.createObjectURL(originalFile);
+  preview.innerHTML = "";
+  preview.appendChild(img);
+};
+
+async function convert(){
+  if(!originalFile) return alert("Upload an image");
+
+  const format = formatSelect = document.getElementById("format").value;
+  const img = new Image();
+  img.src = URL.createObjectURL(originalFile);
+
+  img.onload = async () => {
+    const canvas = document.createElement("canvas");
+    canvas.width = img.width;
+    canvas.height = img.height;
+    canvas.getContext("2d").drawImage(img,0,0);
+
+    // PDF
+    if(format === "pdf"){
+      const pdf = await PDFLib.PDFDocument.create();
+      const page = pdf.addPage([img.width, img.height]);
+      const png = await pdf.embedPng(canvas.toDataURL("image/png"));
+      page.drawImage(png,{x:0,y:0,width:img.width,height:img.height});
+      const bytes = await pdf.save();
+      downloadBlob(bytes,"image.pdf");
+      return;
+    }
+
+    // TIFF
+    if(format === "tiff"){
+      const rgba = canvas.getContext("2d").getImageData(0,0,canvas.width,canvas.height).data;
+      const tiff = UTIF.encodeImage(rgba,canvas.width,canvas.height);
+      downloadBlob(tiff,"image.tiff");
+      return;
+    }
+
+    canvas.toBlob(blob=>{
+      downloadBlob(blob,"converted-image");
+    },format,0.95);
+  }
+}
+
+function downloadBlob(blob,name){
+  const a = document.getElementById("download");
+  a.href = URL.createObjectURL(new Blob([blob]));
+  a.download = name;
+  a.style.display="block";
+  a.innerText="Download File";
+}
+</script>
+
+</body>
+</html>
