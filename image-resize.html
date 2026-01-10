@@ -1,157 +1,798 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Resize IMAGE – PicProTools</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-
-<style>
-body{margin:0;font-family:Inter;background:#f2f5f9}
-.header{text-align:center;padding:28px 18px 10px}
-.header h1{margin:0;font-size:26px}
-.header p{color:#6b7280;font-size:14px}
-
-.card{max-width:480px;background:#fff;margin:10px auto;padding:22px;
-border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.08)}
-
-.upload-box{border:2px dashed #3b82f6;padding:22px;text-align:center;
-border-radius:16px;background:#f8fbff}
-.upload-box input{display:none}
-.upload-box label{background:#3b82f6;color:white;padding:14px 18px;
-border-radius:12px;display:inline-block;cursor:pointer;font-weight:600}
-
-.grid{display:grid;grid-template-columns:1fr 44px 1fr;gap:10px;margin-top:18px}
-
-input,select{width:100%;padding:12px;border-radius:12px;border:1px solid #d1d5db;font-size:15px}
-
-.lock{width:44px;height:44px;border-radius:50%;border:none;
-background:#3b82f6;color:#fff;font-size:18px;cursor:pointer}
-
-.section{margin-top:16px}
-.section label{font-size:13px;color:#555;display:block;margin-bottom:4px}
-
-.preview img{width:100%;border-radius:14px;margin-top:16px}
-.preview h3{margin:10px 0;font-size:15px;color:#4b5563}
-
-.btn-main{margin-top:18px;width:100%;background:#3b82f6;color:white;border:none;
-padding:16px;font-size:17px;border-radius:14px;font-weight:700}
-.download{background:#22c55e;margin-top:10px}
-.hidden{display:none}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulk Image Resizer | PicProTools</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* Upload Zone */
+        .upload-zone {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: 3px dashed rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .upload-zone.dragover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            border-color: rgba(255, 255, 255, 0.8);
+            transform: scale(1.02);
+        }
+        
+        /* Main Upload Button */
+        .main-upload-btn {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            -webkit-tap-highlight-color: rgba(255, 255, 255, 0.5);
+        }
+        
+        @media (hover: hover) {
+            .main-upload-btn:hover {
+                background: rgba(255, 255, 255, 1);
+                transform: translateY(-2px);
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            }
+        }
+        
+        /* Mobile Optimizations */
+        @media (max-width: 768px) {
+            .main-upload-btn {
+                padding: 12px 24px;
+                min-height: 50px;
+            }
+            
+            .upload-zone {
+                padding: 40px 20px !important;
+            }
+        }
+        
+        /* Dropdown */
+        .upload-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 280px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            margin-top: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .upload-dropdown.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        
+        .dropdown-item {
+            width: 100%;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.2s ease;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            cursor: pointer;
+            -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        .dropdown-item:active {
+            background: rgba(0, 0, 0, 0.05);
+        }
+        
+        @media (hover: hover) {
+            .dropdown-item:hover {
+                background: rgba(0, 0, 0, 0.03);
+            }
+        }
+        
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+        
+        /* File Input */
+        #fileInput {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 2;
+        }
+        
+        /* Responsive Fixes */
+        @media (max-width: 640px) {
+            .upload-dropdown {
+                width: 90vw;
+                max-width: 280px;
+                left: 50%;
+                transform: translateX(-50%);
+            }
+        }
+        
+        /* Settings Panel */
+        #settingsPanel {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: all 0.5s ease;
+        }
+        
+        #settingsPanel.show {
+            max-height: 800px;
+            opacity: 1;
+        }
+        
+        /* Mobile Touch Feedback */
+        .touch-feedback:active {
+            transform: scale(0.98);
+            transition: transform 0.1s ease;
+        }
+        
+        /* Prevent text selection on buttons */
+        button, .dropdown-item {
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+    </style>
 </head>
+<body class="min-h-screen">
 
-<body>
+    <!-- Navigation -->
+    <nav class="py-4 px-4 md:px-6 max-w-7xl mx-auto">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
+                    <i class="fas fa-tools text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg md:text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">PicProTools</h1>
+                    <p class="text-xs text-gray-500 hidden md:block">Professional Image Tools</p>
+                </div>
+            </div>
+            <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600">
+                <i class="fas fa-bars text-xl"></i>
+            </button>
+            <div class="hidden md:flex items-center space-x-6">
+                <a href="#" class="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors">Home</a>
+                <a href="#" class="text-sm font-medium text-blue-600 border-b-2 border-blue-600 pb-1">Bulk Resize</a>
+                <a href="#" class="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors">Convert</a>
+                <a href="#" class="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors">Compress</a>
+                <button class="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white text-sm font-semibold rounded-lg shadow-md hover:shadow-lg transition-all">
+                    All Tools
+                </button>
+            </div>
+        </div>
+    </nav>
 
-<div class="header">
-  <h1>Resize IMAGE</h1>
-  <p>Resize JPG, PNG, WEBP images online</p>
-</div>
+    <!-- Main Content -->
+    <div class="max-w-6xl mx-auto px-4 md:px-6 py-6 md:py-8">
+        
+        <!-- Hero -->
+        <div class="text-center mb-8 md:mb-12">
+            <h1 class="text-3xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-3 md:mb-4">
+                Bulk Image Resizer
+            </h1>
+            <p class="text-base md:text-xl text-gray-600 max-w-3xl mx-auto px-4">
+                Resize multiple images simultaneously. Perfect for social media, web optimization, and print.
+            </p>
+        </div>
 
-<div class="card">
+        <!-- Upload Zone -->
+        <div class="relative mb-8 md:mb-12 px-2">
+            <div id="dropZone" class="upload-zone rounded-2xl md:rounded-3xl p-8 md:p-16 text-center shadow-2xl">
+                
+                <!-- Mobile Notice -->
+                <div class="md:hidden text-white/90 text-sm mb-4">
+                    <i class="fas fa-mobile-alt mr-2"></i> Touch-friendly interface
+                </div>
 
-  <div class="upload-box">
-    <input type="file" id="upload" accept="image/*">
-    <label for="upload">Select Image</label>
-  </div>
+                <!-- Upload Icon -->
+                <div class="mb-6 md:mb-8">
+                    <div class="relative inline-block">
+                        <div class="w-16 h-16 md:w-24 md:h-24 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                            <i class="fas fa-cloud-upload-alt text-white text-2xl md:text-4xl"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Main Upload Button -->
+                <div class="relative inline-flex items-center justify-center w-full max-w-md mx-auto">
+                    <div class="relative w-full">
+                        <!-- Hidden File Input -->
+                        <input type="file" id="fileInput" multiple accept="image/*" 
+                               class="absolute w-full h-full top-0 left-0 opacity-0 cursor-pointer z-10">
+                        
+                        <!-- Visible Button -->
+                        <div class="main-upload-btn rounded-xl md:rounded-2xl font-bold text-base md:text-lg flex items-center justify-center gap-3 cursor-pointer touch-feedback relative z-0"
+                             onclick="document.getElementById('fileInput').click()">
+                            <div class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+                                <i class="fas fa-folder-open text-white"></i>
+                            </div>
+                            <span class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                                Select Images
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <!-- Dropdown Button -->
+                    <button onclick="toggleDropdown(event)" 
+                            class="main-upload-btn rounded-xl md:rounded-2xl px-4 md:px-6 ml-2 md:ml-3 touch-feedback">
+                        <i id="arrowIcon" class="fas fa-chevron-down text-gray-500 text-base md:text-xl"></i>
+                    </button>
 
-  <div class="preview hidden" id="previewBox">
-    <h3>Original</h3>
-    <img id="previewImg">
-  </div>
+                    <!-- Dropdown Menu -->
+                    <div id="uploadDropdown" class="upload-dropdown">
+                        <div class="dropdown-item" onclick="document.getElementById('fileInput').click()">
+                            <div class="w-10 h-10 rounded-lg bg-gradient-to-r from-blue-100 to-blue-50 flex items-center justify-center">
+                                <i class="fas fa-desktop text-blue-600"></i>
+                            </div>
+                            <div class="text-left">
+                                <div class="font-semibold text-gray-800">From Device</div>
+                                <div class="text-xs text-gray-500">Upload from your device</div>
+                            </div>
+                        </div>
+                        
+                        <div class="dropdown-item" onclick="importFromDrive()">
+                            <div class="w-10 h-10 rounded-lg bg-gradient-to-r from-green-100 to-green-50 flex items-center justify-center">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg" class="w-5 h-5" alt="Drive">
+                            </div>
+                            <div class="text-left">
+                                <div class="font-semibold text-gray-800">Google Drive</div>
+                                <div class="text-xs text-gray-500">Import from cloud</div>
+                            </div>
+                        </div>
+                        
+                        <div class="dropdown-item" onclick="importFromDropbox()">
+                            <div class="w-10 h-10 rounded-lg bg-gradient-to-r from-blue-100 to-blue-50 flex items-center justify-center">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Dropbox_Icon.svg" class="w-5 h-5" alt="Dropbox">
+                            </div>
+                            <div class="text-left">
+                                <div class="font-semibold text-gray-800">Dropbox</div>
+                                <div class="text-xs text-gray-500">Sync with your files</div>
+                            </div>
+                        </div>
+                        
+                        <div class="dropdown-item" onclick="importFromUrl()">
+                            <div class="w-10 h-10 rounded-lg bg-gradient-to-r from-purple-100 to-purple-50 flex items-center justify-center">
+                                <i class="fas fa-link text-purple-600"></i>
+                            </div>
+                            <div class="text-left">
+                                <div class="font-semibold text-gray-800">From URL</div>
+                                <div class="text-xs text-gray-500">Enter image web address</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-  <div class="preview hidden" id="afterBox">
-    <h3>Resized</h3>
-    <img id="afterImg">
-  </div>
+                <p class="text-white font-semibold mt-8 md:mt-12 text-base md:text-xl mb-2">
+                    <i class="fas fa-hand-pointer mr-2"></i>Drag & Drop images here
+                </p>
+                <p class="text-white/80 text-xs md:text-sm">
+                    Supports JPG, PNG, WebP • Max 50 images • Up to 50MB each
+                </p>
+            </div>
+        </div>
 
-  <div class="grid">
-    <div>
-      <label>W</label>
-      <input type="number" id="w">
+        <!-- Image Previews -->
+        <div id="previewContainer" class="mb-8 md:mb-12 hidden">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 md:mb-6 gap-3">
+                <h3 class="text-xl md:text-2xl font-bold text-gray-800">
+                    <i class="fas fa-images mr-3 text-blue-600"></i>
+                    Selected Images <span id="imageCount" class="text-blue-600">(0)</span>
+                </h3>
+                <div class="flex gap-2">
+                    <button onclick="clearAllImages()" 
+                            class="px-3 py-2 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-lg hover:shadow-lg transition-all flex items-center gap-2 text-sm">
+                        <i class="fas fa-trash"></i>
+                        Clear All
+                    </button>
+                </div>
+            </div>
+            <div id="previewGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4"></div>
+        </div>
+
+        <!-- Settings Panel -->
+        <div id="settingsPanel" class="bg-white rounded-2xl md:rounded-3xl p-4 md:p-8 mb-8 md:mb-12 shadow-lg">
+            <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-4 md:mb-8 flex items-center gap-3">
+                <div class="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+                    <i class="fas fa-sliders-h text-white text-sm md:text-base"></i>
+                </div>
+                Resize Settings
+            </h2>
+            
+            <div class="grid md:grid-cols-2 gap-6 md:gap-8">
+                <!-- Dimensions -->
+                <div class="space-y-4">
+                    <label class="block text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                        <i class="fas fa-expand-alt text-blue-600"></i>
+                        Target Dimensions
+                    </label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-2">Width (px)</label>
+                            <input type="number" id="widthInput" placeholder="Auto" 
+                                   class="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-2">Height (px)</label>
+                            <input type="number" id="heightInput" placeholder="Auto" 
+                                   class="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <input type="checkbox" id="aspectRatio" checked 
+                               class="w-4 h-4 md:w-5 md:h-5 text-blue-600 rounded focus:ring-blue-500">
+                        <label for="aspectRatio" class="text-gray-700 flex items-center gap-2">
+                            <i class="fas fa-link text-blue-600"></i>
+                            Lock Aspect Ratio
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Format -->
+                <div class="space-y-4">
+                    <label class="block text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                        <i class="fas fa-file-image text-purple-600"></i>
+                        Output Settings
+                    </label>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-2">Format</label>
+                            <div class="flex gap-2">
+                                <button onclick="selectFormat('jpg')" 
+                                        class="format-option flex-1 p-3 rounded-lg border border-gray-200 text-center touch-feedback format-jpg">
+                                    <div class="font-semibold">JPG</div>
+                                </button>
+                                <button onclick="selectFormat('png')" 
+                                        class="format-option flex-1 p-3 rounded-lg border border-gray-200 text-center touch-feedback format-png">
+                                    <div class="font-semibold">PNG</div>
+                                </button>
+                                <button onclick="selectFormat('webp')" 
+                                        class="format-option flex-1 p-3 rounded-lg border border-gray-200 text-center touch-feedback format-webp">
+                                    <div class="font-semibold">WebP</div>
+                                </button>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-2">Quality: <span id="qualityValue">90%</span></label>
+                            <input type="range" id="qualityInput" min="10" max="100" value="90" 
+                                   class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-gradient-to-r [&::-webkit-slider-thumb]:from-blue-500 [&::-webkit-slider-thumb]:to-purple-600">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Button -->
+            <div class="mt-8 md:mt-10 text-center">
+                <button onclick="processAndDownload()" id="downloadBtn" 
+                        class="w-full md:w-auto bg-gradient-to-r from-blue-600 to-purple-600 text-white text-base md:text-lg font-bold py-4 px-8 rounded-xl md:rounded-2xl shadow-xl hover:shadow-2xl transition-all flex items-center justify-center gap-3 touch-feedback">
+                    <i class="fas fa-magic"></i>
+                    <span>Resize & Download All</span>
+                    <i class="fas fa-arrow-down"></i>
+                </button>
+                <p class="text-gray-500 text-xs md:text-sm mt-3">
+                    <i class="fas fa-shield-alt mr-2"></i>All processing happens locally in your browser
+                </p>
+            </div>
+        </div>
+
+        <!-- Features -->
+        <div class="grid md:grid-cols-3 gap-6 md:gap-8 mb-12 md:mb-20">
+            <div class="bg-white rounded-2xl p-6 shadow-lg">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center mb-4">
+                    <i class="fas fa-bolt text-white"></i>
+                </div>
+                <h3 class="text-lg font-bold text-gray-800 mb-3">Lightning Fast</h3>
+                <p class="text-gray-600">
+                    Resize hundreds of images in seconds with our optimized engine.
+                </p>
+            </div>
+            
+            <div class="bg-white rounded-2xl p-6 shadow-lg">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-r from-green-500 to-teal-500 flex items-center justify-center mb-4">
+                    <i class="fas fa-lock text-white"></i>
+                </div>
+                <h3 class="text-lg font-bold text-gray-800 mb-3">100% Secure</h3>
+                <p class="text-gray-600">
+                    Your images never leave your browser. Complete privacy guaranteed.
+                </p>
+            </div>
+            
+            <div class="bg-white rounded-2xl p-6 shadow-lg">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-r from-orange-500 to-pink-500 flex items-center justify-center mb-4">
+                    <i class="fas fa-chart-line text-white"></i>
+                </div>
+                <h3 class="text-lg font-bold text-gray-800 mb-3">Smart Optimization</h3>
+                <p class="text-gray-600">
+                    Intelligent algorithms preserve quality while reducing file size.
+                </p>
+            </div>
+        </div>
     </div>
-    <button class="lock" id="lockBtn">🔒</button>
-    <div>
-      <label>H</label>
-      <input type="number" id="h">
-    </div>
-  </div>
 
-  <div class="section">
-    <label>Format</label>
-    <select id="format">
-      <option value="image/jpeg">JPG</option>
-      <option value="image/png">PNG</option>
-      <option value="image/webp">WEBP</option>
-    </select>
-  </div>
+    <script>
+        // State Management
+        let filesArray = [];
+        let currentFormat = 'jpg';
+        let isDropdownOpen = false;
 
-  <button class="btn-main" id="resizeBtn">Resize Image</button>
-  <button class="btn-main download hidden" id="downloadBtn">Download Image</button>
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            setupEventListeners();
+            selectFormat('jpg');
+        });
 
-</div>
+        // Setup Event Listeners
+        function setupEventListeners() {
+            // File input change
+            document.getElementById('fileInput').addEventListener('change', (e) => {
+                handleFiles(e.target.files);
+            });
 
-<script>
-const upload = document.getElementById("upload");
-const previewImg = document.getElementById("previewImg");
-const afterImg = document.getElementById("afterImg");
-const previewBox = document.getElementById("previewBox");
-const afterBox = document.getElementById("afterBox");
-const wInput = document.getElementById("w");
-const hInput = document.getElementById("h");
-const lockBtn = document.getElementById("lockBtn");
-const resizeBtn = document.getElementById("resizeBtn");
-const downloadBtn = document.getElementById("downloadBtn");
-const format = document.getElementById("format");
+            // Quality slider
+            document.getElementById('qualityInput').addEventListener('input', (e) => {
+                document.getElementById('qualityValue').textContent = e.target.value + '%';
+            });
 
-let ratio=1, resizedBlob, locked=true;
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                const dropdown = document.getElementById('uploadDropdown');
+                const arrowIcon = document.getElementById('arrowIcon');
+                if (!e.target.closest('#uploadDropdown') && !e.target.closest('button[onclick*="toggleDropdown"]')) {
+                    dropdown.classList.remove('show');
+                    arrowIcon.classList.remove('fa-chevron-up');
+                    arrowIcon.classList.add('fa-chevron-down');
+                    isDropdownOpen = false;
+                }
+            });
 
-upload.onchange = e=>{
-  const file = e.target.files[0];
-  const img = new Image();
-  img.src = URL.createObjectURL(file);
-  img.onload = ()=>{
-    previewImg.src = img.src;
-    previewBox.classList.remove("hidden");
-    afterBox.classList.add("hidden");
-    wInput.value = img.width;
-    hInput.value = img.height;
-    ratio = img.width/img.height;
-  }
-}
+            // Mobile menu
+            window.toggleMobileMenu = function() {
+                const nav = document.querySelector('.hidden.md\\:flex');
+                nav.classList.toggle('hidden');
+                nav.classList.toggle('flex');
+                nav.classList.toggle('flex-col');
+                nav.classList.toggle('absolute');
+                nav.classList.toggle('top-16');
+                nav.classList.toggle('right-4');
+                nav.classList.toggle('bg-white');
+                nav.classList.toggle('p-4');
+                nav.classList.toggle('rounded-lg');
+                nav.classList.toggle('shadow-xl');
+                nav.classList.toggle('z-50');
+            };
 
-lockBtn.onclick = ()=>{
-  locked=!locked;
-  lockBtn.textContent = locked?"🔒":"🔓";
-}
+            // Aspect ratio logic
+            const widthInput = document.getElementById('widthInput');
+            const heightInput = document.getElementById('heightInput');
+            const aspectCheck = document.getElementById('aspectRatio');
+            let aspectRatio = 0;
 
-wInput.oninput = ()=>{ if(locked) hInput.value=Math.round(wInput.value/ratio); }
-hInput.oninput = ()=>{ if(locked) wInput.value=Math.round(hInput.value*ratio); }
+            function updateAspectRatio() {
+                if (widthInput.value && heightInput.value) {
+                    aspectRatio = widthInput.value / heightInput.value;
+                }
+            }
 
-resizeBtn.onclick = ()=>{
-  const img = new Image();
-  img.src = previewImg.src;
-  img.onload = ()=>{
-    const canvas = document.createElement("canvas");
-    canvas.width = wInput.value;
-    canvas.height = hInput.value;
-    canvas.getContext("2d").drawImage(img,0,0,canvas.width,canvas.height);
-    canvas.toBlob(blob=>{
-      resizedBlob = blob;
-      afterImg.src = URL.createObjectURL(blob);
-      afterBox.classList.remove("hidden");
-      downloadBtn.classList.remove("hidden");
-    },format.value,0.9);
-  }
-}
+            widthInput.addEventListener('input', () => {
+                if(aspectCheck.checked && aspectRatio > 0) {
+                    heightInput.value = Math.round(widthInput.value / aspectRatio);
+                } else {
+                    updateAspectRatio();
+                }
+            });
 
-downloadBtn.onclick = ()=>{
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(resizedBlob);
-  a.download = "resized-image";
-  a.click();
-}
-</script>
+            heightInput.addEventListener('input', () => {
+                if(aspectCheck.checked && aspectRatio > 0) {
+                    widthInput.value = Math.round(heightInput.value * aspectRatio);
+                } else {
+                    updateAspectRatio();
+                }
+            });
 
+            // Drag and drop
+            const dropZone = document.getElementById('dropZone');
+            
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => {
+                    dropZone.classList.add('dragover');
+                }, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => {
+                    dropZone.classList.remove('dragover');
+                }, false);
+            });
+
+            dropZone.addEventListener('drop', handleDrop, false);
+        }
+
+        // Handle drag and drop
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        }
+
+        // Toggle dropdown
+        function toggleDropdown(e) {
+            e.stopPropagation();
+            const dropdown = document.getElementById('uploadDropdown');
+            const arrowIcon = document.getElementById('arrowIcon');
+            
+            isDropdownOpen = !isDropdownOpen;
+            
+            if (isDropdownOpen) {
+                dropdown.classList.add('show');
+                arrowIcon.classList.remove('fa-chevron-down');
+                arrowIcon.classList.add('fa-chevron-up');
+            } else {
+                dropdown.classList.remove('show');
+                arrowIcon.classList.remove('fa-chevron-up');
+                arrowIcon.classList.add('fa-chevron-down');
+            }
+        }
+
+        // Handle file selection
+        function handleFiles(files) {
+            if (!files || files.length === 0) return;
+            
+            // Filter valid image files
+            const validFiles = Array.from(files).filter(file => {
+                return file.type.startsWith('image/') && file.size <= 50 * 1024 * 1024;
+            }).slice(0, 50 - filesArray.length); // Max 50 files
+
+            if (validFiles.length === 0) {
+                showNotification('Please select valid image files (max 50MB each)', 'error');
+                return;
+            }
+
+            filesArray = [...filesArray, ...validFiles];
+            
+            // Show preview container
+            document.getElementById('previewContainer').classList.remove('hidden');
+            document.getElementById('imageCount').textContent = `(${filesArray.length})`;
+            
+            // Show settings panel
+            document.getElementById('settingsPanel').classList.add('show');
+            
+            // Render previews
+            renderPreviews();
+            
+            // Auto-detect dimensions from first file
+            if (validFiles[0] && !document.getElementById('widthInput').value) {
+                const img = new Image();
+                img.onload = () => {
+                    if (!document.getElementById('widthInput').value) {
+                        document.getElementById('widthInput').value = img.naturalWidth;
+                        document.getElementById('heightInput').value = img.naturalHeight;
+                    }
+                };
+                img.src = URL.createObjectURL(validFiles[0]);
+            }
+            
+            showNotification(`Added ${validFiles.length} image(s)`, 'success');
+        }
+
+        // Render image previews
+        function renderPreviews() {
+            const grid = document.getElementById('previewGrid');
+            grid.innerHTML = '';
+
+            filesArray.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const div = document.createElement('div');
+                    div.className = "bg-white rounded-xl p-2 shadow-sm border border-gray-100 relative group";
+                    div.innerHTML = `
+                        <button onclick="removeFile(${index})" 
+                                class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow-md z-10 cursor-pointer touch-feedback">
+                            <i class="fas fa-times text-xs"></i>
+                        </button>
+                        <div class="h-28 overflow-hidden rounded-lg bg-gray-100 flex items-center justify-center">
+                             <img src="${event.target.result}" class="w-full h-full object-cover" loading="lazy">
+                        </div>
+                        <div class="mt-2">
+                            <p class="text-xs font-semibold text-gray-800 truncate">${file.name}</p>
+                            <p class="text-[10px] text-gray-500 mt-1">
+                                ${(file.size / 1024 / 1024).toFixed(2)} MB
+                            </p>
+                        </div>
+                    `;
+                    grid.appendChild(div);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Remove single file
+        function removeFile(index) {
+            filesArray.splice(index, 1);
+            document.getElementById('imageCount').textContent = `(${filesArray.length})`;
+            renderPreviews();
+            
+            if (filesArray.length === 0) {
+                document.getElementById('previewContainer').classList.add('hidden');
+                document.getElementById('settingsPanel').classList.remove('show');
+            }
+        }
+
+        // Clear all images
+        function clearAllImages() {
+            if (filesArray.length === 0) return;
+            
+            if (confirm(`Remove all ${filesArray.length} images?`)) {
+                filesArray = [];
+                document.getElementById('previewContainer').classList.add('hidden');
+                document.getElementById('settingsPanel').classList.remove('show');
+                showNotification('All images removed', 'success');
+            }
+        }
+
+        // Select format
+        function selectFormat(format) {
+            currentFormat = format;
+            document.querySelectorAll('.format-option').forEach(btn => {
+                btn.classList.remove('border-blue-500', 'bg-blue-50');
+            });
+            document.querySelector(`.format-${format}`).classList.add('border-blue-500', 'bg-blue-50');
+        }
+
+        // Import functions
+        function importFromDrive() {
+            showNotification('Google Drive integration coming soon!', 'info');
+        }
+
+        function importFromDropbox() {
+            showNotification('Dropbox integration coming soon!', 'info');
+        }
+
+        function importFromUrl() {
+            const url = prompt("Enter the image URL:", "https://example.com/image.jpg");
+            if (url && url.startsWith('http')) {
+                showNotification('Loading image from URL...', 'info');
+                // Note: This requires CORS support
+                fetch(url)
+                    .then(response => response.blob())
+                    .then(blob => {
+                        const file = new File([blob], "image_from_url.jpg", { type: blob.type });
+                        handleFiles([file]);
+                    })
+                    .catch(() => {
+                        showNotification('Failed to load image. It may be blocked by CORS.', 'error');
+                    });
+            }
+        }
+
+        // Main processing function
+        async function processAndDownload() {
+            if (filesArray.length === 0) {
+                showNotification('Please select images first!', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('downloadBtn');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            btn.disabled = true;
+
+            const zip = new JSZip();
+            const mimeType = currentFormat === 'jpg' ? 'image/jpeg' : 
+                            currentFormat === 'png' ? 'image/png' : 'image/webp';
+
+            try {
+                for (let i = 0; i < filesArray.length; i++) {
+                    const file = filesArray[i];
+                    const img = await loadImage(file);
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    let targetWidth = document.getElementById('widthInput').value || img.naturalWidth;
+                    let targetHeight = document.getElementById('heightInput').value || img.naturalHeight;
+                    
+                    canvas.width = targetWidth;
+                    canvas.height = targetHeight;
+                    ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+                    
+                    const blob = await new Promise(resolve => {
+                        canvas.toBlob(resolve, mimeType, document.getElementById('qualityInput').value / 100);
+                    });
+                    
+                    const fileName = file.name.replace(/\.[^/.]+$/, "") + '_resized.' + currentFormat;
+                    zip.file(fileName, blob);
+                }
+
+                const content = await zip.generateAsync({type: "blob"});
+                saveAs(content, `resized_images_${Date.now()}.zip`);
+                
+                showNotification(`${filesArray.length} images resized and downloaded!`, 'success');
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('Failed to process images', 'error');
+            } finally {
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+            }
+        }
+
+        function loadImage(file) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = reject;
+                img.src = URL.createObjectURL(file);
+            });
+        }
+
+        // Notification system
+        function showNotification(message, type) {
+            // Remove existing notifications
+            document.querySelectorAll('.notification').forEach(n => n.remove());
+            
+            const notification = document.createElement('div');
+            notification.className = `notification fixed top-4 right-4 px-4 py-3 rounded-lg shadow-xl text-white z-50 transform translate-x-full transition-transform duration-300 ${
+                type === 'success' ? 'bg-green-500' : 
+                type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+            }`;
+            notification.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
+                    <div class="text-sm font-medium">${message}</div>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => {
+                notification.classList.remove('translate-x-full');
+                notification.classList.add('translate-x-0');
+            }, 10);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.classList.remove('translate-x-0');
+                notification.classList.add('translate-x-full');
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+    </script>
 </body>
 </html>
