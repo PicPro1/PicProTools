@@ -1,144 +1,105 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PicProTools - Your Daily Tools, All in One Place</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/main.css">
-    
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PicProTools – Free Image Tools</title>
+
+  <!-- Main CSS -->
+  <link rel="stylesheet" href="assets/css/main.css" />
+
+  <!-- Font Awesome -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+  />
 </head>
+
 <body>
-    <h1>Free Image Tools — No Login, No Watermark</h1>
-    <!-- Header Section -->
-    <header>
-        <div class="container header-container">
-            <a href="#" class="logo">
-                <i class="fas fa-tools"></i>
-                Pic<span>ProTools</span>
-            </a>
-            
-            <button class="mobile-menu-btn" id="mobileMenuBtn">
-                <i class="fas fa-bars"></i>
-            </button>
-            
-            <div class="nav-links" id="navLinks">
-                <a href="#" class="active">Home</a>
-                <a href="#">Tools</a>
-                <a href="#">Contact</a>
-                <a href="mailto:picprotools@gmail.com" class="contact-email">
-                    <i class="fas fa-envelope"></i>
-                    picprotools@gmail.com
-                </a>
-            </div>
-        </div>
-    </header>
 
-    <!-- Hero Section -->
-    <section class="hero">
-        <div class="container hero-container">
-            <div class="hero-content">
-                <h1>Your Daily Tools, All in One Place</h1>
-                <div class="hero-badges">
-  <span>⚡ 100% Free</span>
-  <span>🔒 No Login</span>
-  <span>🚫 No Watermark</span>
-  <span>🎨 Premium UI</span>
-                </div>
-                <p>Convert, calculate, compress, and simplify your everyday tasks — fast and free.</p>
-                <a href="#tools" class="cta-button">Explore Tools</a>
-            </div>
-            <div class="hero-visual">
-                <div class="tool-icons">
-                    <a href="tools/image-converter.html " class="tool-icon">
-                        <i class="fas fa-image"></i>
-                        <span>Image Converter</span>
-                    </a>
-                  <a href="tools/image-compressor.html" class="tool-icon">
-                        <i class="fas fa-compress"></i>
-                        <span>Image Compressor</span>
-                    </a>
-                    <a href="tools/image-resize.html" class="tool-icon">
-                        <i class="fas fa-compress"></i>
-                        <span>Image Resize</span>
-                    </a>
-                    <a href="tools/image-cropper.html" class="tool-icon">
-                        <i class="fas fa-compress"></i>
-                        <span>Image Cropper</span>
-                    </a>
-                    <div class="tool-icon">
-                        <i class="fas fa-font"></i>
-                        <span>Image to Text</span>
-                    </div>
-                    <div class="tool-icon">
-                        <i class="fas fa-sync-alt"></i>
-                        <span>Rotator/Flipper</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+  <!-- ================= HEADER ================= -->
+  <header>
+    <div class="container header-container">
+      <div class="logo">
+        <i class="fas fa-tools"></i>
+        <span>PicProTools</span>
+      </div>
 
-    <!-- Search Section -->
-    <section class="search-section">
-        <div class="container search-container">
-            <div class="search-box">
-                <input type="text" id="searchInput" placeholder="Search a tool...">
-                <button id="searchButton">
-                    <i class="fas fa-search"></i>
-                </button>
-            </div>
-            <div class="search-results" id="searchResults">
-                <!-- Search results will appear here dynamically -->
-            </div>
-        </div>
-    </section>
+      <nav id="navLinks">
+        <a href="#tools">Tools</a>
+        <a href="#support">Support</a>
+      </nav>
 
-    <!-- Image Tools Section (ONLY SECTION) -->
-    <section class="tools-section" id="tools">
-        <div class="container">
-            <div class="section-header">
-                <h2><i class="fas fa-image"></i> Image Tools</h2>
-                <p>Powerful tools to edit, convert, and optimize your images for any purpose</p>
-            </div>
-            
-            <div class="tools-grid" id="imageToolsGrid">
-                <!-- Image tools will be added here dynamically -->
-            </div>
-        </div>
-    </section>
+      <button id="mobileMenuBtn" class="mobile-menu-btn">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+  </header>
 
-    <!-- Footer -->
-    <footer>
-        <div class="container footer-container">
-            <div class="footer-top">
-                <div class="footer-info">
-                    <a href="#" class="footer-logo">
-                        <i class="fas fa-tools"></i>
-                        PicProTools
-                    </a>
-                    <p class="footer-tagline">Simplifying your digital life.</p>
-                    <a href="mailto:picprotools@gmail.com" class="footer-email">
-                        <i class="fas fa-envelope"></i>
-                        picprotools@gmail.com
-                    </a>
-                </div>
-                
-                <div class="footer-links">
-                    <a href="#">Privacy Policy</a>
-                    <a href="#">Terms of Use</a>
-                </div>
-            </div>
-            
-            <div class="footer-bottom">
-                <p>&copy; 2023 PicProTools. All rights reserved.</p>
-            </div>
-        </div>
-    </footer>
+  <!-- ================= HERO ================= -->
+  <section class="hero">
+    <div class="container hero-container">
 
-<script src="assets/js/main.js"></script>
+      <div class="hero-content">
+        <h1>Your Daily Tools, All in One Place</h1>
+
+        <div class="hero-badges">
+          <span>⚡ 100% Free</span>
+          <span>🔒 No Login</span>
+          <span>🚫 No Watermark</span>
+          <span>🎨 Premium UI</span>
+        </div>
+
+        <p>
+          Convert, resize, compress, and crop images easily —
+          fast, secure, and completely free.
+        </p>
+
+        <a href="#tools" class="cta-button">Explore Tools</a>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================= TOOLS ================= -->
+  <section id="tools" class="tools-section">
+    <div class="container">
+      <h2>Image Tools</h2>
+
+      <div class="tools-grid">
+
+        <a href="tools/image-converter.html" class="tool-card">
+          <i class="fas fa-image"></i>
+          <h3>Image Converter</h3>
+          <p>Convert images between formats</p>
+        </a>
+
+        <a href="tools/image-compressor.html" class="tool-card">
+          <i class="fas fa-compress"></i>
+          <h3>Image Compressor</h3>
+          <p>Reduce image size without quality loss</p>
+        </a>
+
+        <a href="tools/image-resize.html" class="tool-card">
+          <i class="fas fa-expand"></i>
+          <h3>Image Resizer</h3>
+          <p>Resize images to any dimension</p>
+        </a>
+
+        <a href="tools/image-cropper.html" class="tool-card">
+          <i class="fas fa-crop"></i>
+          <h3>Image Cropper</h3>
+          <p>Crop unwanted parts easily</p>
+        </a>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SUPPORT (EMPTY FOR NOW) ================= -->
+  <section id="support"></section>
+
+  <!-- Main JS -->
+  <script src="assets/js/main.js"></script>
 </body>
-</html>                                     
+</html>
