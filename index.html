@@ -1,105 +1,151 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PicProTools – Free Image Tools</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PicProTools - Free Online Image Tools (No Login)</title>
+    <meta name="description" content="Free, fast, and secure online image tools. Compress, resize, crop, and convert images instantly in your browser. No login required, no watermarks.">
+    
+    <meta property="og:title" content="PicProTools - Free Image Tools">
+    <meta property="og:description" content="Secure, client-side image processing. No uploads, no sign-ups.">
+    <meta property="og:type" content="website">
+    
+    <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
 
-  <!-- Main CSS -->
-  <link rel="stylesheet" href="assets/css/main.css" />
-
-  <!-- Font Awesome -->
-  <link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
-  />
+    <link rel="stylesheet" href="assets/css/main.css">
 </head>
-
 <body>
 
-  <!-- ================= HEADER ================= -->
-  <header>
-    <div class="container header-container">
-      <div class="logo">
-        <i class="fas fa-tools"></i>
-        <span>PicProTools</span>
-      </div>
+    <header class="site-header">
+        <div class="container header-container">
+            <a href="index.html" class="logo">
+                <span class="logo-icon">❖</span> PicProTools
+            </a>
+            
+            <button class="mobile-menu-btn" aria-label="Toggle navigation" aria-expanded="false">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </button>
 
-      <nav id="navLinks">
-        <a href="#tools">Tools</a>
-        <a href="#support">Support</a>
-      </nav>
-
-      <button id="mobileMenuBtn" class="mobile-menu-btn">
-        <i class="fas fa-bars"></i>
-      </button>
-    </div>
-  </header>
-
-  <!-- ================= HERO ================= -->
-  <section class="hero">
-    <div class="container hero-container">
-
-      <div class="hero-content">
-        <h1>Your Daily Tools, All in One Place</h1>
-
-        <div class="hero-badges">
-          <span>⚡ 100% Free</span>
-          <span>🔒 No Login</span>
-          <span>🚫 No Watermark</span>
-          <span>🎨 Premium UI</span>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="#tools">All Tools</a></li>
+                    <li><a href="#why-us">Why Us</a></li>
+                    <li><a href="#support">Support</a></li>
+                </ul>
+            </nav>
         </div>
+    </header>
 
-        <p>
-          Convert, resize, compress, and crop images easily —
-          fast, secure, and completely free.
-        </p>
+    <main>
+        <section class="hero-section">
+            <div class="container hero-content">
+                <span class="hero-badge">✨ 100% Free & Private</span>
+                <h1>Modify Images Instantly. <br>Securely in Your Browser.</h1>
+                <p class="hero-subtext">
+                    The fastest way to edit photos online. No server uploads, no login, and absolutely no watermarks.
+                </p>
+                
+                <div class="trust-pills">
+                    <span class="pill"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg> Private</span>
+                    <span class="pill"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg> No Login</span>
+                    <span class="pill"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg> Lighting Fast</span>
+                </div>
 
-        <a href="#tools" class="cta-button">Explore Tools</a>
-      </div>
+                <a href="#tools" class="btn btn-primary">Explore Tools</a>
+            </div>
+        </section>
 
-    </div>
-  </section>
+        <section id="tools" class="tools-section">
+            <div class="container">
+                <div class="section-header">
+                    <h2>Our Tools</h2>
+                    <p>Select a tool to get started immediately.</p>
+                </div>
 
-  <!-- ================= TOOLS ================= -->
-  <section id="tools" class="tools-section">
-    <div class="container">
-      <h2>Image Tools</h2>
+                <div class="tools-grid">
+                    <a href="tools/image-compressor.html" class="tool-card">
+                        <div class="tool-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20"></polyline><polyline points="20 10 14 10 14 4"></polyline><line x1="14" y1="10" x2="21" y2="3"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+                        </div>
+                        <h3>Image Compressor</h3>
+                        <p>Reduce file size while maintaining high quality. Perfect for web optimization.</p>
+                    </a>
 
-      <div class="tools-grid">
+                    <a href="tools/image-resize.html" class="tool-card">
+                        <div class="tool-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg>
+                        </div>
+                        <h3>Image Resizer</h3>
+                        <p>Change image dimensions by percentage or pixel count accurately.</p>
+                    </a>
 
-        <a href="tools/image-converter.html" class="tool-card">
-          <i class="fas fa-image"></i>
-          <h3>Image Converter</h3>
-          <p>Convert images between formats</p>
-        </a>
+                    <a href="tools/image-cropper.html" class="tool-card">
+                        <div class="tool-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.13 1L6 16a2 2 0 0 0 2 2h15"></path><path d="M1 6.13L16 6a2 2 0 0 1 2 2v15"></path></svg>
+                        </div>
+                        <h3>Image Cropper</h3>
+                        <p>Trim edges or crop to specific aspect ratios for social media.</p>
+                    </a>
 
-        <a href="tools/image-compressor.html" class="tool-card">
-          <i class="fas fa-compress"></i>
-          <h3>Image Compressor</h3>
-          <p>Reduce image size without quality loss</p>
-        </a>
+                    <a href="tools/image-converter.html" class="tool-card">
+                        <div class="tool-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                        </div>
+                        <h3>Image Converter</h3>
+                        <p>Convert images between JPG, PNG, WEBP, and other formats instantly.</p>
+                    </a>
+                </div>
+            </div>
+        </section>
 
-        <a href="tools/image-resize.html" class="tool-card">
-          <i class="fas fa-expand"></i>
-          <h3>Image Resizer</h3>
-          <p>Resize images to any dimension</p>
-        </a>
+        <section id="why-us" class="features-section">
+            <div class="container">
+                <div class="features-grid">
+                    <div class="feature-item">
+                        <h4>🔒 Privacy First</h4>
+                        <p>We use client-side technology. Your photos are processed in your browser and never sent to our servers.</p>
+                    </div>
+                    <div class="feature-item">
+                        <h4>🚀 Fast & Lightweight</h4>
+                        <p>No bloated software to install. Our tools load instantly on any device, even on slow connections.</p>
+                    </div>
+                    <div class="feature-item">
+                        <h4>✅ Always Free</h4>
+                        <p>PicProTools is a passion project. No hidden fees, no premium tiers, and no watermark spam.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-        <a href="tools/image-cropper.html" class="tool-card">
-          <i class="fas fa-crop"></i>
-          <h3>Image Cropper</h3>
-          <p>Crop unwanted parts easily</p>
-        </a>
+        <section id="support" class="support-section">
+            <div class="container support-content">
+                <h2>Keep PicProTools Free</h2>
+                <p>We don't run intrusive ads. If these tools helped you save time, consider supporting the project to keep the servers running.</p>
+                <div class="support-buttons">
+                    <button class="btn btn-secondary">☕ Buy me a Coffee</button>
+                </div>
+            </div>
+        </section>
+    </main>
 
-      </div>
-    </div>
-  </section>
+    <footer class="site-footer">
+        <div class="container footer-content">
+            <div class="footer-left">
+                <strong>PicProTools</strong>
+                <p class="footer-desc">Simple, secure, online image utilities.</p>
+            </div>
+            <div class="footer-links">
+                <a href="#tools">Tools</a>
+                <a href="#">Privacy Policy</a> <a href="#">Contact</a>
+            </div>
+        </div>
+        <div class="container footer-bottom">
+            <p>&copy; 2024 PicProTools. All rights reserved.</p>
+        </div>
+    </footer>
 
-  <!-- ================= SUPPORT (EMPTY FOR NOW) ================= -->
-  <section id="support"></section>
-
-  <!-- Main JS -->
-  <script src="assets/js/main.js"></script>
+    <script src="assets/js/main.js"></script>
 </body>
 </html>
