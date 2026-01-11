@@ -224,6 +224,25 @@
             text-align: center;
         }
 
+         /* Floating animation for hero tool icons */
+.tool-icons a,
+.tool-icon {
+  animation: floatIcon 4s ease-in-out infinite;
+}
+
+/* Keyframes */
+@keyframes floatIcon {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
         /* Search Bar */
         .search-section {
             padding: 40px 0;
