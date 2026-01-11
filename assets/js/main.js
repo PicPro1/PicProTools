@@ -1,18 +1,26 @@
-// PicProTools Landing Page JavaScript
-// This file contains ONLY landing page specific functionality
+// PicProTools - Main JavaScript File
+// This file contains functionality for the landing page and general site features
 
 (function() {
     'use strict';
 
+    // DOM ready function
+    function domReady(callback) {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', callback);
+        } else {
+            callback();
+        }
+    }
+
     // Initialize everything when DOM is ready
-    document.addEventListener('DOMContentLoaded', function() {
+    domReady(function() {
         initializeMobileMenu();
         initializeSmoothScrolling();
         setCurrentYear();
         initializeToolCards();
-        initializeTrustSignalsAnimation();
+        initializeTrustSignals();
         initializeSupportButtons();
-        initializeStickyHeader();
     });
 
     // Mobile Menu Functionality
@@ -126,6 +134,15 @@
                 }
             });
             
+            // Add subtle animation on hover
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-8px)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
+            
             // Add focus styles for accessibility
             card.addEventListener('focus', function() {
                 this.style.outline = '2px solid var(--primary-color)';
@@ -139,7 +156,7 @@
     }
 
     // Animate Trust Signals on Scroll
-    function initializeTrustSignalsAnimation() {
+    function initializeTrustSignals() {
         const trustSignals = document.querySelector('.trust-signals');
         
         if (!trustSignals || !window.IntersectionObserver) return;
@@ -167,19 +184,20 @@
         observer.observe(trustSignals);
     }
 
-    // Support Buttons
+    // Support Buttons with Analytics Tracking (optional)
     function initializeSupportButtons() {
         const supportButtons = document.querySelectorAll('.btn-support');
         
         supportButtons.forEach(button => {
             button.addEventListener('click', function(event) {
-                // Add analytics tracking here if needed
+                // Optional: Add analytics tracking here
                 console.log('Support button clicked:', this.textContent.trim());
+                // Example: ga('send', 'event', 'Support', 'click', this.textContent.trim());
             });
         });
     }
 
-    // Sticky Header Behavior
+    // Add Sticky Header Behavior on Scroll
     function initializeStickyHeader() {
         const header = document.querySelector('.main-header');
         
@@ -197,21 +215,136 @@
                 header.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.05)';
             }
             
-            // Hide/show header on scroll direction
+            // Hide/show header on scroll direction (optional)
             if (currentScrollY > lastScrollY && currentScrollY > 100) {
+                // Scrolling down
                 header.style.transform = 'translateY(-100%)';
-                header.style.transition = 'transform 0.3s ease';
             } else {
+                // Scrolling up
                 header.style.transform = 'translateY(0)';
-                header.style.transition = 'transform 0.3s ease';
             }
             
             lastScrollY = currentScrollY;
         });
     }
 
-    // Console welcome message
-    console.log('%c📸 PicProTools', 'background: #4361ee; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold;');
-    console.log('Free online image tools. No login required. Images processed locally in your browser.');
+    // Initialize sticky header
+    window.addEventListener('load', function() {
+        initializeStickyHeader();
+    });
+
+    // Add Loading State for Buttons (prevents double-clicks)
+    document.addEventListener('click', function(event) {
+        const button = event.target.closest('.btn');
+        
+        if (button && !button.classList.contains('btn-support')) {
+            // Add loading state for non-support buttons
+            button.classList.add('loading');
+            button.innerHTML = '<span>Processing...</span>';
+            
+            // Reset after 2 seconds (for demo purposes)
+            setTimeout(() => {
+                button.classList.remove('loading');
+                if (button.classList.contains('btn-primary')) {
+                    button.innerHTML = 'Explore Tools';
+                } else if (button.classList.contains('btn-secondary')) {
+                    button.innerHTML = 'Learn More';
+                }
+            }, 2000);
+        }
+    });
+
+    // Add CSS for loading state
+    const style = document.createElement('style');
+    style.textContent = `
+        .btn.loading {
+            position: relative;
+            color: transparent !important;
+        }
+        
+        .btn.loading::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            top: 50%;
+            left: 50%;
+            margin-top: -10px;
+            margin-left: -10px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    `;
+    document.head.appendChild(style);
+
+    // Performance optimization: Defer non-critical images
+    if ('loading' in HTMLImageElement.prototype) {
+        const images = document.querySelectorAll('img[loading="lazy"]');
+        images.forEach(img => {
+            img.src = img.dataset.src;
+        });
+    }
+
+    // Handle page visibility changes (pause animations when not visible)
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            // Page is hidden
+            document.body.classList.add('page-hidden');
+        } else {
+            // Page is visible again
+            document.body.classList.remove('page-hidden');
+        }
+    });
+
+    // Error handling for broken images
+    document.addEventListener('error', function(event) {
+        if (event.target.tagName === 'IMG') {
+            event.target.style.display = 'none';
+            console.warn('Image failed to load:', event.target.src);
+        }
+    }, true);
+
+    // Export public API if needed
+    window.PicProTools = window.PicProTools || {};
+    window.PicProTools.utils = {
+        closeMobileMenu: function() {
+            const hamburger = document.querySelector('.hamburger');
+            const navLinks = document.querySelector('.nav-links');
+            
+            if (hamburger && navLinks) {
+                hamburger.classList.remove('active');
+                navLinks.classList.remove('active');
+                hamburger.setAttribute('aria-expanded', 'false');
+                document.body.style.overflow = '';
+            }
+        },
+        
+        scrollToSection: function(sectionId) {
+            const targetElement = document.querySelector(sectionId);
+            if (targetElement) {
+                const header = document.querySelector('.main-header');
+                const headerHeight = header ? header.offsetHeight : 0;
+                const targetPosition = targetElement.getBoundingClientRect().top + window.pageYOffset - headerHeight;
+                
+                window.scrollTo({
+                    top: targetPosition,
+                    behavior: 'smooth'
+                });
+            }
+        }
+    };
+
+    // Console welcome message (remove in production if desired)
+    console.log('%c📸 PicProTools %c- Free Online Image Tools', 
+        'background: #4361ee; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold;',
+        'color: #4361ee; font-weight: bold;'
+    );
+    console.log('All tools are 100% free, no login required. Images are processed locally in your browser.');
 
 })();
