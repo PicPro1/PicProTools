@@ -153,7 +153,7 @@
 
         .hero p {
             font-size: 1.2rem;
-            color: var(--gray-dark);
+            color: rgba(255, 255, 255, 0.9);
             margin-bottom: 30px;
             max-width: 600px;
         }
