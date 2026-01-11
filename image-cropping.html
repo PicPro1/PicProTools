@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulk Image Resizer & Cropper | PicProTools</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); 
+            -webkit-tap-highlight-color: transparent; 
+            min-height: 100vh;
+        }
+        
+        /* Upload Zone */
+        .upload-zone { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            border: 3px dashed rgba(255, 255, 255, 0.3); 
+            transition: all 0.3s ease; 
+        }
+        .upload-zone.dragover { 
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%); 
+            border-color: rgba(255, 255, 255, 0.8); 
+            transform: scale(1.02); 
+        }
+        
+        /* Main Upload Button */
+        .main-upload-btn { 
+            background: rgba(255, 255, 255, 0.95); 
+            backdrop-filter: blur(10px); 
+            border: 1px solid rgba(255, 255, 255, 0.2); 
+            transition: all 0.3s ease; 
+            -webkit-tap-highlight-color: rgba(255, 255, 255, 0.5); 
+            padding: 12px 24px; 
+        }
+        
+        /* Upload Dropdown */
+        .upload-dropdown { 
+            display: none; 
+            position: absolute; 
+            top: 100%; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            width: 280px; 
+            background: rgba(255, 255, 255, 0.98); 
+            backdrop-filter: blur(20px); 
+            border-radius: 16px; 
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15); 
+            z-index: 1000; 
+            margin-top: 10px; 
+            border: 1px solid rgba(255, 255, 255, 0.3); 
+        }
+        .upload-dropdown.show { 
+            display: block; 
+            animation: fadeIn 0.3s ease; 
+        }
+        .dropdown-item { 
+            width: 100%; 
+            padding: 16px 20px; 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            transition: all 0.2s ease; 
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05); 
+            cursor: pointer; 
+        }
+        .dropdown-item:hover {
+            background: rgba(99, 102, 241, 0.05);
+        }
+        
+        /* Editor Workspace */
+        #editorWorkspace { 
+            display: none; 
+            position: fixed; 
+            inset: 0; 
+            background: #0f172a; 
+            z-index: 9999; 
+            flex-direction: column; 
+        }
+        .cropper-view-box { 
+            outline: 2px dashed rgba(255,255,255,0.6); 
+        }
+        .cropper-point { 
+            background-color: #fff !important; 
+            width: 14px !important; 
+            height: 14px !important; 
+            border-radius: 50% !important; 
+            opacity: 1 !important; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4); 
+        }
+        
+        /* Toolbars */
+        .saas-toolbar {
+            position: absolute; 
+            bottom: 40px; 
+            left: 50%; 
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.1); 
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255,255,255,0.1); 
+            border-radius: 100px;
+            padding: 10px 25px; 
+            display: flex; 
+            gap: 20px; 
+            align-items: center;
+        }
+        
+        /* Image Grid */
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .image-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+        
+        .image-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+        }
+        
+        .image-preview {
+            width: 100%;
+            height: 140px;
+            object-fit: cover;
+            background: #f8fafc;
+        }
+        
+        /* Settings Panel */
+        .settings-panel {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Loading Animation */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translate(-50%, -10px); }
+            to { opacity: 1; transform: translate(-50%, 0); }
+        }
+        
+        /* Progress Bar */
+        .progress-bar {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+        
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .image-grid {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+                gap: 1rem;
+            }
+            
+            .saas-toolbar {
+                bottom: 20px;
+                padding: 8px 20px;
+                gap: 15px;
+            }
+        }
+        
+        /* Action Buttons */
+        .action-btn {
+            transition: all 0.3s ease;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        /* Badge */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .badge-premium {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+        
+        .badge-success {
+            background: #10b981;
+            color: white;
+        }
+        
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 99999;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <nav class="py-4 px-4 md:px-6 max-w-7xl mx-auto">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
+                    <i class="fas fa-tools text-white text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg md:text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">PicProTools</h1>
+                    <p class="text-xs text-gray-500 hidden md:block">Professional Image Tools</p>
+                </div>
+            </div>
+            <button onclick="toggleMobileMenu()" class="md:hidden text-gray-600"><i class="fas fa-bars text-xl"></i></button>
+            <div class="hidden md:flex items-center space-x-6">
+                <a href="#" class="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors">Home</a>
+                <a href="#" class="text-sm font-medium text-blue-600 border-b-2 border-blue-600 pb-1">Bulk Resize</a>
+                <a href="#" class="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors">Convert</a>
+                <a href="#" class="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors">Compress</a>
+                <button class="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white text-sm font-semibold rounded-lg shadow-md hover:shadow-lg transition-all">All Tools</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8">
+        <!-- Header -->
+        <div class="text-center mb-8 md:mb-12">
+            <div class="flex flex-col md:flex-row items-center justify-center gap-4 mb-6">
+                <h1 class="text-3xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Bulk Image Resizer & Cropper</h1>
+                <span class="badge badge-premium">
+                    <i class="fas fa-crown mr-1"></i> Pro Tools
+                </span>
+            </div>
+            <p class="text-base md:text-xl text-gray-600 max-w-3xl mx-auto px-4">
+                Resize and crop multiple images simultaneously with professional precision. Perfect for social media, e-commerce, and web optimization.
+            </p>
+        </div>
+
+        <!-- Upload Section -->
+        <div class="relative mb-8 md:mb-12">
+            <div id="dropZone" class="upload-zone rounded-2xl md:rounded-3xl p-8 md:p-16 text-center shadow-2xl">
+                <div class="md:hidden text-white/90 text-sm mb-4">
+                    <i class="fas fa-mobile-alt mr-2"></i> Touch-friendly interface
+                </div>
+                
+                <div class="mb-6 md:mb-8">
+                    <div class="relative inline-block">
+                        <div class="w-16 h-16 md:w-24 md:h-24 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center animate-pulse">
+                            <i class="fas fa-cloud-upload-alt text-white text-2xl md:text-4xl"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="relative inline-flex items-center justify-center w-full max-w-md mx-auto">
+                    <div class="relative w-full">
+                        <input type="file" id="fileInput" multiple accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer z-20">
+                        <div class="main-upload-btn rounded-xl md:rounded-2xl font-bold text-base md:text-lg flex items-center justify-center gap-3 cursor-pointer">
+                            <div class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+                                <i class="fas fa-folder-open text-white"></i>
+                            </div>
+                            <span class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Select Images</span>
+                        </div>
+                    </div>
+                    <button onclick="toggleDropdown(event)" class="main-upload-btn rounded-xl md:rounded-2xl px-4 md:px-6 ml-2 md:ml-3">
+                        <i class="fas fa-chevron-down text-gray-500"></i>
+                    </button>
+
+                    <div id="uploadDropdown" class="upload-dropdown">
+                        <div class="dropdown-item" onclick="document.getElementById('fileInput').click()">
+                            <div class="w-10 h-10 rounded-lg bg-gradient-to-r from-blue-100 to-blue-50 flex items-center justify-center text-blue-600">
+                                <i class="fas fa-desktop"></i>
+                            </div>
+                            <div class="text-left">
+                                <div class="font-semibold text-gray-800">From Device</div>
+                                <div class="text-xs text-gray-500">Upload from your device</div>
+                            </div>
+                        </div>
+                        <div class="dropdown-item" onclick="showToast('Cloud integration coming soon!')">
+                            <div class="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg" class="w-5 h-5">
+                            </div>
+                            <div class="text-left">
+                                <div class="font-semibold text-gray-800">Google Drive</div>
+                                <div class="text-xs text-gray-500">Import from cloud</div>
+                            </div>
+                        </div>
+                        <div class="dropdown-item" onclick="showToast('Cloud integration coming soon!')">
+                            <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Dropbox_Icon.svg" class="w-5 h-5">
+                            </div>
+                            <div class="text-left">
+                                <div class="font-semibold text-gray-800">Dropbox</div>
+                                <div class="text-xs text-gray-500">Sync with your files</div>
+                            </div>
+                        </div>
+                        <div class="dropdown-item" onclick="showUrlUpload()">
+                            <div class="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600">
+                                <i class="fas fa-link"></i>
+                            </div>
+                            <div class="text-left">
+                                <div class="font-semibold text-gray-800">From URL</div>
+                                <div class="text-xs text-gray-500">Enter image web address</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <p class="text-white font-semibold mt-8 md:mt-12 text-base md:text-xl mb-2">Drag & Drop images here</p>
+                <p class="text-white/80 text-xs md:text-sm">Supports JPG, PNG, WebP, GIF • Max 50 images • Up to 20MB each</p>
+                
+                <!-- Progress Bar -->
+                <div id="uploadProgress" class="w-full max-w-md mx-auto mt-6 hidden">
+                    <div class="flex justify-between text-white text-sm mb-2">
+                        <span>Uploading...</span>
+                        <span id="progressText">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div id="progressFill" class="progress-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Editor Interface (Hidden Initially) -->
+        <div id="editorInterface" class="hidden">
+            <!-- Settings Panel -->
+            <div class="settings-panel p-6 mb-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Resize Settings -->
+                    <div>
+                        <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
+                            <i class="fas fa-expand-alt text-blue-500"></i> Resize Settings
+                        </h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Width (px)</label>
+                                <input type="number" id="resizeWidth" value="1920" min="1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Height (px)</label>
+                                <input type="number" id="resizeHeight" value="1080" min="1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" id="maintainAspect" checked class="w-4 h-4 text-blue-600 rounded">
+                                <label for="maintainAspect" class="ml-2 text-sm text-gray-700">Maintain aspect ratio</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Crop Settings -->
+                    <div>
+                        <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
+                            <i class="fas fa-crop-alt text-purple-500"></i> Crop Settings
+                        </h3>
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-2 gap-3">
+                                <button onclick="setPreset(1,1)" class="px-3 py-2 bg-gray-100 rounded-lg text-sm hover:bg-gray-200">
+                                    Square (1:1)
+                                </button>
+                                <button onclick="setPreset(16,9)" class="px-3 py-2 bg-gray-100 rounded-lg text-sm hover:bg-gray-200">
+                                    Widescreen (16:9)
+                                </button>
+                                <button onclick="setPreset(4,5)" class="px-3 py-2 bg-gray-100 rounded-lg text-sm hover:bg-gray-200">
+                                    Portrait (4:5)
+                                </button>
+                                <button onclick="setPreset(9,16)" class="px-3 py-2 bg-gray-100 rounded-lg text-sm hover:bg-gray-200">
+                                    Vertical (9:16)
+                                </button>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <button onclick="enterIndividualCropMode()" class="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg text-sm font-semibold">
+                                    <i class="fas fa-crop mr-2"></i> Individual Crop
+                                </button>
+                                <button onclick="applyCropToAll()" class="px-4 py-2 bg-gray-100 rounded-lg text-sm hover:bg-gray-200">
+                                    Apply to All
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Format & Quality -->
+                    <div>
+                        <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
+                            <i class="fas fa-download text-green-500"></i> Output Settings
+                        </h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Format</label>
+                                <div class="flex gap-2">
+                                    <button onclick="setFormat('jpeg')" class="flex-1 px-3 py-2 bg-blue-500 text-white rounded-lg text-sm">JPEG</button>
+                                    <button onclick="setFormat('png')" class="flex-1 px-3 py-2 bg-gray-100 rounded-lg text-sm hover:bg-gray-200">PNG</button>
+                                    <button onclick="setFormat('webp')" class="flex-1 px-3 py-2 bg-gray-100 rounded-lg text-sm hover:bg-gray-200">WebP</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Quality: <span id="qualityValue">90</span>%</label>
+                                <input type="range" id="qualitySlider" min="1" max="100" value="90" class="w-full">
+                            </div>
+                            <div>
+                                <button onclick="processAllImages()" class="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-bold hover:shadow-lg transition-all">
+                                    <i class="fas fa-magic mr-2"></i> Process All Images
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Image Grid -->
+            <div id="imageGrid" class="image-grid mb-8">
+                <!-- Images will be added here dynamically -->
+            </div>
+
+            <!-- Bulk Actions -->
+            <div class="bg-white rounded-xl p-6 shadow-lg mb-8">
+                <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div class="text-gray-600">
+                        <span id="imageCount">0</span> images selected • Total size: <span id="totalSize">0 MB</span>
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick="selectAllImages()" class="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
+                            <i class="fas fa-check-square mr-2"></i> Select All
+                        </button>
+                        <button onclick="clearAllImages()" class="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
+                            <i class="fas fa-trash mr-2"></i> Clear All
+                        </button>
+                        <button onclick="downloadAllImages()" class="px-6 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg font-semibold hover:shadow-lg">
+                            <i class="fas fa-download mr-2"></i> Download All
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Individual Crop Editor (Hidden Initially) -->
+        <div id="cropEditor" class="hidden fixed inset-0 bg-gray-900 z-50">
+            <div class="h-full flex flex-col">
+                <!-- Header -->
+                <div class="p-4 bg-gray-800/80 backdrop-blur-md border-b border-white/10">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <button onclick="exitCropMode()" class="text-white/70 hover:text-white">
+                                <i class="fas fa-arrow-left text-xl"></i>
+                            </button>
+                            <h3 class="text-white font-semibold">
+                                Crop Image <span id="cropIndex">1</span>/<span id="totalCropCount">1</span>
+                            </h3>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <button onclick="cropPrevImage()" class="text-white/70 hover:text-white">
+                                <i class="fas fa-chevron-left text-xl"></i>
+                            </button>
+                            <button onclick="cropNextImage()" class="text-white/70 hover:text-white">
+                                <i class="fas fa-chevron-right text-xl"></i>
+                            </button>
+                            <button onclick="saveCrop()" class="px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-full font-semibold ml-4">
+                                Save Crop
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Crop Area -->
+                <div class="flex-grow relative overflow-hidden">
+                    <img id="cropImage" style="max-width: 100%; max-height: 100%; display: block; margin: auto;">
+                    
+                    <!-- Aspect Ratio Toolbar -->
+                    <div class="saas-toolbar">
+                        <button onclick="setCropAspect(1)" class="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white">
+                            <i class="fas fa-square"></i>
+                        </button>
+                        <button onclick="setCropAspect(16/9)" class="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white">
+                            <i class="fas fa-desktop"></i>
+                        </button>
+                        <button onclick="setCropAspect(9/16)" class="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white">
+                            <i class="fas fa-mobile-alt"></i>
+                        </button>
+                        <button onclick="setCropAspect(4/3)" class="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white">
+                            <i class="fas fa-image"></i>
+                        </button>
+                        <button onclick="setCropAspect(NaN)" class="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Rotation Controls -->
+                    <div class="absolute top-4 right-4 flex gap-2">
+                        <button onclick="rotateCrop(-90)" class="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white">
+                            <i class="fas fa-undo"></i>
+                        </button>
+                        <button onclick="rotateCrop(90)" class="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white">
+                            <i class="fas fa-redo"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Processing Modal -->
+    <div id="processingModal" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
+            <div class="text-center">
+                <div class="loading-spinner mx-auto mb-4"></div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Processing Images</h3>
+                <p class="text-gray-600 mb-6" id="processingText">Resizing and optimizing your images...</p>
+                <div class="progress-bar mb-4">
+                    <div id="processProgressFill" class="progress-fill" style="width: 0%"></div>
+                </div>
+                <p class="text-sm text-gray-500" id="processProgressText">0 of 0 images processed</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- URL Upload Modal -->
+    <div id="urlModal" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-gray-800">Upload from URL</h3>
+                <button onclick="hideUrlModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="mb-6">
+                <input type="url" id="imageUrl" placeholder="https://example.com/image.jpg" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <p class="text-sm text-gray-500 mt-2">Enter image URL (supports JPG, PNG, WebP, GIF)</p>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="hideUrlModal()" class="flex-1 px-4 py-3 bg-gray-100 rounded-lg hover:bg-gray-200">
+                    Cancel
+                </button>
+                <button onclick="loadFromUrl()" class="flex-1 px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg font-semibold">
+                    Load Image
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let images = [];
+        let currentCropIndex = 0;
+        let cropCropper = null;
+        let currentFormat = 'jpeg';
+        let processing = false;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Drag and drop functionality
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('fileInput');
+
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            });
+
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('dragover');
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                handleFiles(e.dataTransfer.files);
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                handleFiles(e.target.files);
+            });
+
+            // Quality slider
+            document.getElementById('qualitySlider').addEventListener('input', function() {
+                document.getElementById('qualityValue').textContent = this.value;
+            });
+
+            // Hide upload dropdown when clicking outside
+            document.addEventListener('click', function(event) {
+                const dropdown = document.getElementById('uploadDropdown');
+                if (!event.target.closest('.main-upload-btn') && !dropdown.contains(event.target)) {
+                    dropdown.classList.remove('show');
+                }
+            });
+        });
+
+        // Handle file uploads
+        function handleFiles(files) {
+            const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+            const maxSize = 20 * 1024 * 1024; // 20MB
+            
+            // Show progress
+            const progressBar = document.getElementById('uploadProgress');
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            
+            progressBar.classList.remove('hidden');
+            progressFill.style.width = '0%';
+            progressText.textContent = '0%';
+            
+            let processed = 0;
+            const total = files.length;
+            
+            for (let i = 0; i < Math.min(files.length, 50); i++) {
+                const file = files[i];
+                
+                if (!validTypes.includes(file.type)) {
+                    showToast(`Skipped ${file.name}: Invalid file type`);
+                    continue;
+                }
+                
+                if (file.size > maxSize) {
+                    showToast(`Skipped ${file.name}: File too large (max 20MB)`);
+                    continue;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    processed++;
+                    
+                    // Update progress
+                    const progress = Math.round((processed / total) * 100);
+                    progressFill.style.width = `${progress}%`;
+                    progressText.textContent = `${progress}%`;
+                    
+                    // Add image to array
+                    images.push({
+                        id: Date.now() + Math.random(),
+                        name: file.name,
+                        size: (file.size / 1024 / 1024).toFixed(2),
+                        type: file.type,
+                        originalData: e.target.result,
+                        editedData: e.target.result,
+                        selected: true
+                    });
+                    
+                    // If this is the last file, update UI
+                    if (processed === Math.min(files.length, 50)) {
+                        setTimeout(() => {
+                            progressBar.classList.add('hidden');
+                            updateImageGrid();
+                            showEditorInterface();
+                        }, 500);
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+            
+            if (files.length > 50) {
+                showToast(`Only the first 50 images were loaded`);
+            }
+        }
+
+        // Update image grid
+        function updateImageGrid() {
+            const grid = document.getElementById('imageGrid');
+            grid.innerHTML = '';
+            
+            let totalSize = 0;
+            
+            images.forEach((img, index) => {
+                totalSize += parseFloat(img.size);
+                
+                const card = document.createElement('div');
+                card.className = 'image-card';
+                card.innerHTML = `
+                    <div class="relative">
+                        <img src="${img.editedData}" class="image-preview" alt="${img.name}">
+                        <div class="absolute top-2 right-2">
+                            <button onclick="editImage(${index})" class="w-8 h-8 bg-white/90 rounded-full flex items-center justify-center shadow-sm hover:bg-white">
+                                <i class="fas fa-crop text-gray-700 text-sm"></i>
+                            </button>
+                        </div>
+                        <div class="absolute top-2 left-2">
+                            <input type="checkbox" ${img.selected ? 'checked' : ''} onchange="toggleImageSelection(${index})" class="w-5 h-5 rounded">
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-800 truncate">${img.name}</p>
+                                <p class="text-xs text-gray-500">${img.size} MB • ${img.type.split('/')[1].toUpperCase()}</p>
+                            </div>
+                            <button onclick="removeImage(${index})" class="text-gray-400 hover:text-red-500">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="previewImage(${index})" class="flex-1 px-2 py-1 bg-gray-100 rounded text-xs hover:bg-gray-200">
+                                <i class="fas fa-eye mr-1"></i> Preview
+                            </button>
+                            <button onclick="downloadSingleImage(${index})" class="flex-1 px-2 py-1 bg-blue-50 text-blue-600 rounded text-xs hover:bg-blue-100">
+                                <i class="fas fa-download mr-1"></i> Download
+                            </button>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+            
+            // Update counters
+            document.getElementById('imageCount').textContent = images.filter(img => img.selected).length;
+            document.getElementById('totalSize').textContent = totalSize.toFixed(2);
+        }
+
+        // Show editor interface
+        function showEditorInterface() {
+            document.getElementById('editorInterface').classList.remove('hidden');
+        }
+
+        // Image management functions
+        function toggleImageSelection(index) {
+            images[index].selected = !images[index].selected;
+            document.getElementById('imageCount').textContent = images.filter(img => img.selected).length;
+        }
+
+        function selectAllImages() {
+            images.forEach(img => img.selected = true);
+            updateImageGrid();
+        }
+
+        function clearAllImages() {
+            if (confirm('Are you sure you want to remove all images?')) {
+                images = [];
+                document.getElementById('editorInterface').classList.add('hidden');
+                updateImageGrid();
+            }
+        }
+
+        function removeImage(index) {
+            images.splice(index, 1);
+            if (images.length === 0) {
+                document.getElementById('editorInterface').classList.add('hidden');
+            }
+            updateImageGrid();
+        }
+
+        // Edit individual image
+        function editImage(index) {
+            currentCropIndex = index;
+            enterIndividualCropMode();
+        }
+
+        // Enter individual crop mode
+        function enterIndividualCropMode() {
+            if (images.length === 0) return;
+            
+            currentCropIndex = 0;
+            document.getElementById('cropIndex').textContent = currentCropIndex + 1;
+            document.getElementById('totalCropCount').textContent = images.length;
+            document.getElementById('cropEditor').classList.remove('hidden');
+            
+            loadImageForCrop();
+        }
+
+        function loadImageForCrop() {
+            const imgElement = document.getElementById('cropImage');
+            imgElement.src = images[currentCropIndex].editedData;
+            
+            if (cropCropper) {
+                cropCropper.destroy();
+            }
+            
+            setTimeout(() => {
+                cropCropper = new Cropper(imgElement, {
+                    viewMode: 1,
+                    dragMode: 'move',
+                    autoCropArea: 0.8,
+                    guides: true,
+                    center: true,
+                    responsive: true,
+                    restore: false,
+                    checkCrossOrigin: false
+                });
+            }, 100);
+        }
+
+        function setCropAspect(ratio) {
+            if (cropCropper) {
+                cropCropper.setAspectRatio(ratio);
+            }
+        }
+
+        function rotateCrop(degrees) {
+            if (cropCropper) {
+                cropCropper.rotate(degrees);
+            }
+        }
+
+        function cropPrevImage() {
+            if (currentCropIndex > 0) {
+                currentCropIndex--;
+                document.getElementById('cropIndex').textContent = currentCropIndex + 1;
+                loadImageForCrop();
+            }
+        }
+
+        function cropNextImage() {
+            if (currentCropIndex < images.length - 1) {
+                currentCropIndex++;
+                document.getElementById('cropIndex').textContent = currentCropIndex + 1;
+                loadImageForCrop();
+            }
+        }
+
+        function saveCrop() {
+            if (cropCropper) {
+                const canvas = cropCropper.getCroppedCanvas({
+                    imageSmoothingQuality: 'high'
+                });
+                
+                images[currentCropIndex].editedData = canvas.toDataURL(currentFormat, document.getElementById('qualitySlider').value / 100);
+                updateImageGrid();
+                showToast('Crop saved successfully!');
+            }
+        }
+
+        function exitCropMode() {
+            document.getElementById('cropEditor').classList.add('hidden');
+            if (cropCropper) {
+                cropCropper.destroy();
+                cropCropper = null;
+            }
+        }
+
+        // Preset aspect ratios
+        function setPreset(width, height) {
+            const ratio = width / height;
+            showToast(`Aspect ratio set to ${width}:${height}`);
+            
+            // Apply to all selected images
+            images.forEach((img, index) => {
+                if (img.selected) {
+                    const imgElement = new Image();
+                    imgElement.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        
+                        // Calculate crop dimensions
+                        let cropWidth, cropHeight;
+                        const imgRatio = imgElement.width / imgElement.height;
+                        
+                        if (imgRatio > ratio) {
+                            // Image is wider than target ratio
+                            cropHeight = imgElement.height;
+                            cropWidth = cropHeight * ratio;
+                        } else {
+                            // Image is taller than target ratio
+                            cropWidth = imgElement.width;
+                            cropHeight = cropWidth / ratio;
+                        }
+                        
+                        // Center the crop
+                        const x = (imgElement.width - cropWidth) / 2;
+                        const y = (imgElement.height - cropHeight) / 2;
+                        
+                        canvas.width = cropWidth;
+                        canvas.height = cropHeight;
+                        ctx.drawImage(imgElement, x, y, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+                        
+                        img.editedData = canvas.toDataURL(currentFormat, document.getElementById('qualitySlider').value / 100);
+                        
+                        if (index === images.length - 1) {
+                            updateImageGrid();
+                        }
+                    };
+                    imgElement.src = img.editedData;
+                }
+            });
+        }
+
+        // Set output format
+        function setFormat(format) {
+            currentFormat = format;
+            showToast(`Output format set to ${format.toUpperCase()}`);
+            
+            // Update button styles
+            document.querySelectorAll('[onclick^="setFormat"]').forEach(btn => {
+                btn.classList.remove('bg-blue-500', 'text-white');
+                btn.classList.add('bg-gray-100', 'hover:bg-gray-200');
+            });
+            
+            event.target.classList.add('bg-blue-500', 'text-white');
+            event.target.classList.remove('bg-gray-100', 'hover:bg-gray-200');
+        }
+
+        // Process all images
+        function processAllImages() {
+            if (processing) return;
+            processing = true;
+            
+            const selectedImages = images.filter(img => img.selected);
+            if (selectedImages.length === 0) {
+                showToast('No images selected!');
+                processing = false;
+                return;
+            }
+            
+            const modal = document.getElementById('processingModal');
+            const progressFill = document.getElementById('processProgressFill');
+            const progressText = document.getElementById('processProgressText');
+            const processingText = document.getElementById('processingText');
+            
+            modal.classList.remove('hidden');
+            progressFill.style.width = '0%';
+            
+            let processed = 0;
+            const total = selectedImages.length;
+            
+            processingText.textContent = 'Resizing images...';
+            
+            selectedImages.forEach((img, index) => {
+                setTimeout(() => {
+                    const imgElement = new Image();
+                    imgElement.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        
+                        // Get resize dimensions
+                        const width = parseInt(document.getElementById('resizeWidth').value) || imgElement.width;
+                        const height = parseInt(document.getElementById('resizeHeight').value) || imgElement.height;
+                        
+                        // Maintain aspect ratio if checked
+                        let finalWidth = width;
+                        let finalHeight = height;
+                        
+                        if (document.getElementById('maintainAspect').checked) {
+                            const imgRatio = imgElement.width / imgElement.height;
+                            const targetRatio = width / height;
+                            
+                            if (imgRatio > targetRatio) {
+                                finalHeight = height;
+                                finalWidth = finalHeight * imgRatio;
+                            } else {
+                                finalWidth = width;
+                                finalHeight = finalWidth / imgRatio;
+                            }
+                        }
+                        
+                        canvas.width = finalWidth;
+                        canvas.height = finalHeight;
+                        
+                        // Use high quality image smoothing
+                        ctx.imageSmoothingEnabled = true;
+                        ctx.imageSmoothingQuality = 'high';
+                        ctx.drawImage(imgElement, 0, 0, finalWidth, finalHeight);
+                        
+                        // Update image data
+                        img.editedData = canvas.toDataURL(
+                            currentFormat, 
+                            document.getElementById('qualitySlider').value / 100
+                        );
+                        
+                        processed++;
+                        const progress = Math.round((processed / total) * 100);
+                        progressFill.style.width = `${progress}%`;
+                        progressText.textContent = `${processed} of ${total} images processed`;
+                        
+                        if (processed === total) {
+                            processingText.textContent = 'Processing complete!';
+                            setTimeout(() => {
+                                modal.classList.add('hidden');
+                                updateImageGrid();
+                                showToast(`${total} images processed successfully!`);
+                                processing = false;
+                            }, 1000);
+                        }
+                    };
+                    imgElement.src = img.editedData;
+                }, index * 100); // Stagger processing to prevent blocking
+            });
+        }
+
+        // Download functions
+        function downloadSingleImage(index) {
+            const img = images[index];
+            const link = document.createElement('a');
+            link.download = `edited_${img.name}`;
+            link.href = img.editedData;
+            link.click();
+            showToast('Image downloaded!');
+        }
+
+        function downloadAllImages() {
+            const selectedImages = images.filter(img => img.selected);
+            if (selectedImages.length === 0) {
+                showToast('No images selected!');
+                return;
+            }
+            
+            if (selectedImages.length === 1) {
+                downloadSingleImage(images.findIndex(img => img.selected));
+                return;
+            }
+            
+            const zip = new JSZip();
+            const folder = zip.folder("edited_images");
+            
+            selectedImages.forEach((img, index) => {
+                const base64Data = img.editedData.split(',')[1];
+                folder.file(`image_${index + 1}.${currentFormat}`, base64Data, {base64: true});
+            });
+            
+            zip.generateAsync({type:"blob"}).then(function(content) {
+                saveAs(content, "edited_images.zip");
+                showToast('All images downloaded as ZIP!');
+            });
+        }
+
+        // Utility functions
+        function toggleDropdown(e) {
+            e.stopPropagation();
+            document.getElementById('uploadDropdown').classList.toggle('show');
+        }
+
+        function showUrlUpload() {
+            document.getElementById('uploadDropdown').classList.remove('show');
+            document.getElementById('urlModal').classList.remove('hidden');
+        }
+
+        function hideUrlModal() {
+            document.getElementById('urlModal').classList.add('hidden');
+        }
+
+        function loadFromUrl() {
+            const url = document.getElementById('imageUrl').value.trim();
+            if (!url) {
+                showToast('Please enter a valid URL');
+                return;
+            }
+            
+            hideUrlModal();
+            showToast('Loading image from URL...');
+            
+            // Note: This requires proper CORS headers from the server
+            fetch(url)
+                .then(response => response.blob())
+                .then(blob => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        images.push({
+                            id: Date.now() + Math.random(),
+                            name: 'image_from_url.jpg',
+                            size: (blob.size / 1024 / 1024).toFixed(2),
+                            type: blob.type,
+                            originalData: e.target.result,
+                            editedData: e.target.result,
+                            selected: true
+                        });
+                        updateImageGrid();
+                        showEditorInterface();
+                        showToast('Image loaded successfully!');
+                    };
+                    reader.readAsDataURL(blob);
+                })
+                .catch(error => {
+                    console.error('Error loading image:', error);
+                    showToast('Failed to load image from URL');
+                });
+        }
+
+        function previewImage(index) {
+            const img = images[index];
+            const newWindow = window.open();
+            newWindow.document.write(`
+                <html>
+                <head><title>Preview: ${img.name}</title></head>
+                <body style="margin:0;display:flex;align-items:center;justify-content:center;height:100vh;background:#f8fafc">
+                    <img src="${img.editedData}" style="max-width:90%;max-height:90%;object-fit:contain;border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,0.1)">
+                </body>
+                </html>
+            `);
+        }
+
+        function showToast(message) {
+            // Remove existing toast
+            const existingToast = document.querySelector('.toast');
+            if (existingToast) existingToast.remove();
+            
+            // Create new toast
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `
+                <i class="fas fa-check-circle text-green-500"></i>
+                <span>${message}</span>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        function toggleMobileMenu() {
+            const menu = document.querySelector('.hidden.md\\:flex');
+            menu.classList.toggle('hidden');
+            menu.classList.toggle('flex');
+            menu.classList.toggle('flex-col');
+            menu.classList.toggle('absolute');
+            menu.classList.toggle('top-16');
+            menu.classList.toggle('right-4');
+            menu.classList.toggle('bg-white');
+            menu.classList.toggle('p-4');
+            menu.classList.toggle('rounded-xl');
+            menu.classList.toggle('shadow-xl');
+            menu.classList.toggle('space-y-4');
+        }
+    </script>
+</body>
+</html>
