@@ -1,133 +1,341 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Compress IMAGE - PicProTools</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PicProTools - Professional Image Compressor</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-<style>
-body{font-family:Inter,sans-serif;background:#f5f7fb;margin:0}
-.container{max-width:420px;margin:40px auto;text-align:center}
-h1{font-size:26px}
-p{color:#555}
-.btn{background:#3b82f6;color:#fff;border:none;padding:14px 28px;border-radius:10px;font-size:16px;cursor:pointer}
-.hidden{display:none}
-.preview-card{background:#fff;padding:15px;border-radius:12px;
-box-shadow:0 5px 15px rgba(0,0,0,.1);margin:20px}
-img{max-width:100%;border-radius:10px}
-.stat{display:flex;justify-content:center;margin:15px 0}
-.circle{width:90px;height:90px;border-radius:50%;border:8px solid #3b82f6;
-display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px}
-.list{background:#fff;border-radius:12px;padding:10px;margin-top:20px;text-align:left}
-.list div{padding:12px;border-bottom:1px solid #eee}
-input[type=range]{width:100%}
-</style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: { brand: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8' } }
+                }
+            }
+        }
+    </script>
+    <style>
+        [x-cloak] { display: none !important; }
+        .drag-active { border-color: #2563eb; background-color: #eff6ff; }
+        /* Ensuring a perfect square for the upload box */
+        .square-box { aspect-ratio: 1 / 1; max-width: 500px; margin: 0 auto; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+    </style>
 </head>
 
-<body>
-<div class="container">
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
 
-<h1>Compress IMAGE</h1>
-<p>Compress JPG, PNG or WEBP with best quality.</p>
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <div class="bg-brand-600 text-white p-2 rounded-lg shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                    <span class="font-bold text-xl tracking-tight text-slate-900">PicPro<span class="text-brand-600">Tools</span></span>
+                </div>
+            </div>
+        </div>
+    </nav>
 
-<input type="file" id="upload" accept="image/*" hidden>
-<button class="btn" onclick="upload.click()">Select Images</button>
+    <main class="flex-grow py-10 px-4 sm:px-6 lg:px-8" x-data="compressorApp()">
+        <div class="max-w-6xl mx-auto">
+            
+            <div class="text-center mb-10">
+                <h1 class="text-4xl font-extrabold text-slate-900 tracking-tight mb-4">Image Compressor</h1>
+                <p class="text-lg text-slate-600">Secure, high-speed optimization with full dimension presets.</p>
+            </div>
 
-<div id="preview" class="preview-card hidden">
-  <img id="previewImg">
-  <p id="fileName"></p>
+            <div class="bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden">
+                
+                <div x-show="!fileLoaded" 
+                     class="square-box m-10 border-4 border-dashed border-slate-200 rounded-3xl flex flex-col items-center justify-center cursor-pointer hover:border-brand-500 hover:bg-brand-50 transition-all duration-300 group"
+                     :class="{ 'drag-active': isDragging }"
+                     @click="$refs.fileInput.click()"
+                     @dragover.prevent="isDragging = true"
+                     @dragleave.prevent="isDragging = false"
+                     @drop.prevent="handleDrop($event)">
+                    
+                    <div class="w-24 h-24 bg-brand-50 text-brand-600 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-sm">
+                        <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                    </div>
+                    <h2 class="text-2xl font-bold text-slate-800 px-6 text-center">Drop your image here</h2>
+                    <p class="mt-2 text-slate-400 font-medium">JPEG, PNG, or WEBP</p>
+                    <input type="file" x-ref="fileInput" class="hidden" accept="image/*" @change="handleFileSelect">
+                </div>
 
-  <label><input type="radio" name="mode" value="auto" checked> Automatic</label>
-  <label style="margin-left:10px"><input type="radio" name="mode" value="manual"> Manual</label>
+                <div x-show="fileLoaded" x-cloak class="flex flex-col lg:flex-row h-full min-h-[650px]">
+                    
+                    <div class="flex-grow bg-slate-50 p-8 flex items-center justify-center relative border-b lg:border-b-0 lg:border-r border-slate-200">
+                        <div class="relative">
+                            <img :src="previewUrl" class="max-w-full max-h-[500px] rounded-xl shadow-2xl" alt="Preview">
+                            <div x-show="isProcessing" class="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center rounded-xl">
+                                <svg class="animate-spin h-10 w-10 text-brand-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            </div>
+                        </div>
+                        <button @click="reset()" class="absolute top-4 left-4 p-2 bg-white rounded-full shadow-lg hover:text-red-600 transition-all">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
 
-  <div id="manualBox" class="hidden">
-    <p>Compression: <b><span id="qVal">60</span>%</b></p>
-    <input type="range" id="qualityRange" min="10" max="90" value="60">
-  </div>
+                    <div class="w-full lg:w-[400px] p-8 flex flex-col bg-white overflow-y-auto">
+                        <h3 class="font-bold text-lg text-slate-800 mb-6">Optimization Settings</h3>
+                        
+                        <div class="grid grid-cols-2 gap-3 mb-8">
+                            <div class="p-3 bg-slate-50 rounded-xl border text-center">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase">Original</span>
+                                <div class="font-bold text-slate-800" x-text="formatSize(originalSize)"></div>
+                            </div>
+                            <div class="p-3 bg-brand-50 rounded-xl border border-brand-100 text-center">
+                                <span class="text-[10px] font-bold text-brand-600 uppercase">New Size</span>
+                                <div class="font-bold text-brand-700" x-text="formatSize(compressedSize)"></div>
+                            </div>
+                        </div>
 
-  <br>
-  <button class="btn" onclick="compress()">Compress IMAGE</button>
-</div>
+                        <div class="mb-8">
+                            <div class="flex justify-between mb-2">
+                                <label class="font-bold text-sm text-slate-700">Image Quality</label>
+                                <span class="text-brand-600 font-bold text-sm" x-text="Math.round(quality*100)+'%'"></span>
+                            </div>
+                            <input type="range" min="0.1" max="1.0" step="0.05" x-model="quality" @input.debounce.400ms="processImage()" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-brand-600">
+                        </div>
 
-<div id="result" class="hidden">
-  <button class="btn" onclick="download()">Download compressed IMAGE</button>
-  <div class="stat">
-    <div class="circle" id="savedPercent">0%</div>
-  </div>
-  <p id="sizeInfo"></p>
+                        <div class="p-5 rounded-2xl bg-slate-50 border border-slate-100 mb-8">
+                            <label class="flex items-center cursor-pointer mb-4">
+                                <input type="checkbox" x-model="resize" @change="processImage()" class="w-5 h-5 rounded text-brand-600 border-slate-300">
+                                <span class="ml-3 text-sm font-bold text-slate-700 uppercase">Advanced Resizing</span>
+                            </label>
+                            
+                            <div x-show="resize" x-transition class="space-y-5">
+                                <div>
+                                    <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Preset Sizes</label>
+                                    <select @change="applyPreset($event.target.value)" class="w-full border-slate-200 border rounded-lg p-2.5 text-sm bg-white focus:ring-2 focus:ring-brand-500 outline-none">
+                                        <option value="original">Original Dimensions</option>
+                                        <option value="1920">Full HD (1920px)</option>
+                                        <option value="1280">HD (1280px)</option>
+                                        <option value="1080">Instagram Square (1080px)</option>
+                                        <option value="800">Tablet (800px)</option>
+                                        <option value="400">Mobile (400px)</option>
+                                    </select>
+                                </div>
 
-  <div class="list">
-    <div>Resize IMAGE ➜</div>
-    <div>Crop IMAGE ➜</div>
-    <div>Rotate IMAGE ➜</div>
-    <div>Convert to JPG ➜</div>
-    <div>Watermark IMAGE ➜</div>
-  </div>
-</div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Width (px)</label>
+                                        <input type="number" x-model.number="targetWidth" @input.debounce.500ms="updateDimensions('w')" class="w-full border-slate-200 border rounded-lg p-3 text-sm font-medium focus:ring-2 focus:ring-brand-500 outline-none">
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Height (px)</label>
+                                        <input type="number" x-model.number="targetHeight" @input.debounce.500ms="updateDimensions('h')" class="w-full border-slate-200 border rounded-lg p-3 text-sm font-medium focus:ring-2 focus:ring-brand-500 outline-none">
+                                    </div>
+                                </div>
 
-</div>
+                                <label class="flex items-center cursor-pointer">
+                                    <input type="checkbox" x-model="maintainAspectRatio" class="w-4 h-4 rounded text-brand-500">
+                                    <span class="ml-2 text-[11px] font-bold text-slate-500">Lock Aspect Ratio</span>
+                                </label>
+                            </div>
+                        </div>
 
-<script>
-let originalFile, compressedBlob;
+                        <button @click="download()" class="w-full py-4 bg-brand-600 text-white rounded-2xl font-bold hover:bg-brand-700 shadow-xl shadow-brand-100 transition-all flex items-center justify-center gap-2 mb-4">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            Download Optimized Image
+                        </button>
+                    </div>
+                </div>
+            </div>
 
-upload.onchange = e => {
-  originalFile = e.target.files[0];
-  previewImg.src = URL.createObjectURL(originalFile);
-  fileName.innerText = originalFile.name;
-  preview.classList.remove("hidden");
-};
+            <div class="mt-24 mb-20 px-4">
+                <div class="text-center mb-16">
+                    <h2 class="text-3xl font-extrabold text-slate-900 sm:text-4xl">Why PicProTools is Best?</h2>
+                    <div class="w-24 h-1.5 bg-brand-600 mx-auto mt-4 rounded-full"></div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto justify-items-center">
+                    <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center w-full max-w-sm hover:shadow-lg transition-shadow">
+                        <div class="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-6 ring-4 ring-blue-50/50">
+                            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        </div>
+                        <h3 class="font-bold text-xl text-slate-900 mb-3">High-Speed Processing</h3>
+                        <p class="text-slate-500 text-sm leading-relaxed">Advanced local algorithms ensure lightning-fast image compression without waiting for server uploads.</p>
+                    </div>
 
-qualityRange.oninput = () => qVal.innerText = qualityRange.value;
+                    <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center w-full max-w-sm hover:shadow-lg transition-shadow">
+                        <div class="w-14 h-14 bg-green-50 text-green-600 rounded-2xl flex items-center justify-center mb-6 ring-4 ring-green-50/50">
+                            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                        </div>
+                        <h3 class="font-bold text-xl text-slate-900 mb-3">Unmatched Privacy</h3>
+                        <p class="text-slate-500 text-sm leading-relaxed">Safety first. Your images never leave your browser. Processing is 100% private and local on your hardware.</p>
+                    </div>
 
-document.querySelectorAll('input[name="mode"]').forEach(r=>{
-  r.onchange = ()=>{
-    manualBox.classList.toggle("hidden", !(r.value==="manual" && r.checked));
-  }
-});
+                    <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center w-full max-w-sm hover:shadow-lg transition-shadow">
+                        <div class="w-14 h-14 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center mb-6 ring-4 ring-purple-50/50">
+                            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <h3 class="font-bold text-xl text-slate-900 mb-3">User Friendly</h3>
+                        <p class="text-slate-500 text-sm leading-relaxed">No professional skills needed. Simple drag-and-drop interface designed for everyone to use effortlessly.</p>
+                    </div>
 
-function compress(){
-  const img = new Image();
-  img.src = URL.createObjectURL(originalFile);
+                    <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center text-center w-full max-w-sm hover:shadow-lg transition-shadow">
+                        <div class="w-14 h-14 bg-orange-50 text-orange-600 rounded-2xl flex items-center justify-center mb-6 ring-4 ring-orange-50/50">
+                            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                        </div>
+                        <h3 class="font-bold text-xl text-slate-900 mb-3">Complete Toolkit</h3>
+                        <p class="text-slate-500 text-sm leading-relaxed">Access a wide range of professional-grade image editing and compression tools all in one place.</p>
+                    </div>
+                </div>
+            </div>
 
-  img.onload = ()=>{
-    const canvas = document.createElement("canvas");
-    let quality = 0.6;
+        </div>
+    </main>
 
-    if(document.querySelector('input[name="mode"]:checked').value==="auto"){
-      if(originalFile.size > 5_000_000) quality=0.4;
-      else if(originalFile.size > 2_000_000) quality=0.5;
-      else quality=0.7;
-    } else {
-      quality = qualityRange.value/100;
-    }
+    <footer class="bg-white border-t border-slate-200 py-8 mt-auto text-center">
+        <p class="text-slate-400 text-xs font-bold uppercase tracking-widest">&copy; <script>document.write(new Date().getFullYear())</script> PicProTools.</p>
+    </footer>
 
-    const scale = quality<0.5?0.7:0.85;
-    canvas.width = img.width*scale;
-    canvas.height = img.height*scale;
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('compressorApp', () => ({
+                isDragging: false,
+                fileLoaded: false,
+                currentFile: null,
+                originalSize: 0,
+                compressedSize: 0,
+                quality: 0.8,
+                resize: false,
+                maintainAspectRatio: true,
+                originalWidth: 0,
+                originalHeight: 0,
+                targetWidth: 0,
+                targetHeight: 0,
+                previewUrl: null,
+                isProcessing: false,
+                downloadBlob: null,
 
-    const ctx = canvas.getContext("2d");
-    ctx.drawImage(img,0,0,canvas.width,canvas.height);
+                handleDrop(e) {
+                    this.isDragging = false;
+                    const file = e.dataTransfer.files[0];
+                    if (file) this.loadFile(file);
+                },
 
-    canvas.toBlob(blob=>{
-      compressedBlob = blob;
-      const saved = Math.round(100-(blob.size/originalFile.size*100));
-      savedPercent.innerText = saved+"%";
-      sizeInfo.innerText =
-        (originalFile.size/1024/1024).toFixed(2)+" MB → "+
-        (blob.size/1024).toFixed(1)+" KB";
-      result.classList.remove("hidden");
-    },"image/jpeg",quality);
-  }
-}
+                handleFileSelect(e) {
+                    const file = e.target.files[0];
+                    if (file) this.loadFile(file);
+                },
 
-function download(){
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(compressedBlob);
-  a.download = "compressed_"+originalFile.name;
-  a.click();
-}
-</script>
+                loadFile(file) {
+                    if (!file.type.match(/image.*/)) return alert("Please upload an image file.");
+                    const img = new Image();
+                    const reader = new FileReader();
+                    
+                    reader.onload = (e) => {
+                        img.src = e.target.result;
+                        img.onload = () => {
+                            this.currentFile = file;
+                            this.originalSize = file.size;
+                            this.originalWidth = img.width;
+                            this.originalHeight = img.height;
+                            this.targetWidth = img.width;
+                            this.targetHeight = img.height;
+                            this.fileLoaded = true;
+                            this.processImage();
+                        };
+                    };
+                    reader.readAsDataURL(file);
+                },
 
+                applyPreset(val) {
+                    if (val === 'original') {
+                        this.targetWidth = this.originalWidth;
+                        this.targetHeight = this.originalHeight;
+                    } else if (val === '1080') { // Square
+                        this.targetWidth = 1080;
+                        this.targetHeight = 1080;
+                        this.maintainAspectRatio = false; // Disable to allow forcing square
+                    } else {
+                        const target = parseInt(val);
+                        const ratio = this.originalWidth / this.originalHeight;
+                        this.targetWidth = target;
+                        this.targetHeight = Math.round(target / ratio);
+                    }
+                    this.processImage();
+                },
+
+                updateDimensions(source) {
+                    if (this.maintainAspectRatio) {
+                        const ratio = this.originalWidth / this.originalHeight;
+                        if (source === 'w') {
+                            this.targetHeight = Math.round(this.targetWidth / ratio);
+                        } else {
+                            this.targetWidth = Math.round(this.targetHeight * ratio);
+                        }
+                    }
+                    this.processImage();
+                },
+
+                processImage() {
+                    if (!this.currentFile) return;
+                    this.isProcessing = true;
+                    
+                    const reader = new FileReader();
+                    reader.readAsDataURL(this.currentFile);
+                    reader.onload = (e) => {
+                        const img = new Image();
+                        img.src = e.target.result;
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = this.resize ? this.targetWidth : img.width;
+                            canvas.height = this.resize ? this.targetHeight : img.height;
+                            
+                            const ctx = canvas.getContext('2d');
+                            ctx.imageSmoothingEnabled = true;
+                            ctx.imageSmoothingQuality = 'high';
+                            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                            canvas.toBlob((blob) => {
+                                if (this.previewUrl) URL.revokeObjectURL(this.previewUrl);
+                                this.downloadBlob = blob;
+                                this.compressedSize = blob.size;
+                                this.previewUrl = URL.createObjectURL(blob);
+                                this.isProcessing = false;
+                            }, 'image/jpeg', parseFloat(this.quality));
+                        };
+                    };
+                },
+
+                download() {
+                    if (!this.downloadBlob) return;
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(this.downloadBlob);
+                    a.download = `picprotools_optimized.jpg`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                },
+
+                reset() {
+                    this.fileLoaded = false;
+                    this.currentFile = null;
+                    if (this.previewUrl) URL.revokeObjectURL(this.previewUrl);
+                    this.previewUrl = null;
+                    this.$refs.fileInput.value = '';
+                },
+
+                formatSize(bytes) {
+                    if (bytes === 0) return '0 B';
+                    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+                    return parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + ' ' + ['B', 'KB', 'MB', 'GB'][i];
+                }
+            }))
+        });
+    </script>
 </body>
 </html>
