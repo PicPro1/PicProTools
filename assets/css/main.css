@@ -604,3 +604,37 @@ section {
         max-width: 300px;
     }
 }
+
+/* ===== TRUST BADGE (ADDED) ===== */
+
+.trust-wrapper {
+    text-align: center;
+    margin: 40px 0;
+}
+
+.trust-badge {
+    display: inline-block;
+    padding: 14px 28px;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 18px;
+    border-radius: 999px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    animation: trustFadeSlide 1.2s ease;
+}
+
+.trust-badge span {
+    font-weight: 800;
+}
+
+@keyframes trustFadeSlide {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
