@@ -2,147 +2,188 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Resizer - PicProTools</title>
-    <meta name="description" content="Resize JPG, PNG, and WebP images instantly in your browser. Free tool with aspect ratio lock and high-quality local processing.">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Image Resizer Pro - PicProTools</title>
     <style>
         :root {
-            --primary: #2563eb;
-            --bg: #f8fafc;
-            --card: #ffffff;
-            --text: #1e293b;
+            --accent: #6366f1;
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text: #f8fafc;
+            --dim: #94a3b8;
         }
-        body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; margin: 0; padding: 20px; }
-        .container { max-width: 800px; margin: 0 auto; background: var(--card); padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
-        h1 { margin-top: 0; color: var(--primary); font-size: 1.8rem; }
-        .upload-area { border: 2px dashed #cbd5e1; padding: 2rem; text-align: center; border-radius: 8px; cursor: pointer; transition: 0.3s; margin-bottom: 1.5rem; }
-        .upload-area:hover { border-color: var(--primary); background: #eff6ff; }
-        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
-        .input-group { display: flex; flex-direction: column; }
-        label { font-size: 0.875rem; font-weight: 600; margin-bottom: 0.25rem; }
-        input[type="number"] { padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 4px; }
-        .checkbox-group { grid-column: span 2; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; }
-        .actions { display: flex; gap: 1rem; flex-wrap: wrap; }
-        button { padding: 0.75rem 1.5rem; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: 0.2s; }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-primary:hover { background: #1d4ed8; }
-        .btn-download { background: #10b981; color: white; display: none; }
-        .btn-download:hover { background: #059669; }
-        #preview-container { margin-top: 2rem; text-align: center; display: none; }
-        canvas { max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); background: #eee; }
+
+        body { 
+            font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); 
+            margin: 0; padding: 10px; display: flex; justify-content: center;
+        }
+
+        .premium-container {
+            width: 100%; max-width: 1000px; background: var(--card);
+            border-radius: 20px; padding: 20px; box-sizing: border-box;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+
+        h1 { font-size: 1.5rem; margin: 0 0 15px 0; background: linear-gradient(to right, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align: center; }
+
+        /* Responsive Layout */
+        .workspace { display: flex; flex-direction: column; gap: 20px; }
+        @media (min-width: 850px) { .workspace { flex-direction: row; } }
+
+        .preview-area { flex: 1; min-width: 0; text-align: center; background: #000; border-radius: 12px; padding: 10px; display: flex; align-items: center; justify-content: center; min-height: 250px; }
+        canvas { max-width: 100%; max-height: 60vh; border-radius: 4px; }
+
+        .controls { width: 100%; max-width: 350px; margin: 0 auto; display: flex; flex-direction: column; gap: 15px; }
+
+        .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .input-group { display: flex; flex-direction: column; gap: 5px; }
+        label { font-size: 0.7rem; font-weight: bold; color: var(--dim); text-transform: uppercase; }
+
+        input, select { 
+            background: #0f172a; border: 1px solid #334155; color: white;
+            padding: 10px; border-radius: 8px; font-size: 0.9rem; width: 100%; box-sizing: border-box;
+        }
+
+        /* Preset Buttons */
+        .preset-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+        .btn-preset { 
+            background: #334155; border: none; color: white; padding: 8px; 
+            border-radius: 6px; font-size: 0.75rem; cursor: pointer; transition: 0.2s;
+        }
+        .btn-preset:hover { background: var(--accent); }
+
+        .stats { background: #0f172a; padding: 10px; border-radius: 8px; display: flex; justify-content: space-between; font-size: 0.8rem; }
+        
+        .btn-main { 
+            background: var(--accent); color: white; border: none; padding: 14px; 
+            border-radius: 10px; font-weight: bold; cursor: pointer; width: 100%;
+        }
+        
+        .upload-zone { border: 2px dashed #334155; padding: 40px 10px; text-align: center; border-radius: 15px; cursor: pointer; }
         .hidden { display: none; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>Image Resizer</h1>
-    <p>Upload an image to resize locally. Your files never leave your device.</p>
+<div class="premium-container">
+    <h1>PicPro Studio</h1>
 
-    <div class="upload-area" onclick="document.getElementById('fileInput').click()">
-        <p>Click to Upload or Drag & Drop</p>
-        <span style="font-size: 0.8rem; color: #64748b;">JPG, PNG, WebP supported</span>
-        <input type="file" id="fileInput" class="hidden" accept="image/jpeg, image/png, image/webp">
+    <div id="dropZone" class="upload-zone" onclick="document.getElementById('fileInput').click()">
+        <p>Tap to upload image</p>
+        <span style="color:var(--dim); font-size: 0.8rem;">JPG, PNG, WebP</span>
+        <input type="file" id="fileInput" class="hidden" accept="image/*">
     </div>
 
-    <div id="editor" class="hidden">
-        <div class="controls">
-            <div class="input-group">
-                <label>Width (px)</label>
-                <input type="number" id="widthInput">
-            </div>
-            <div class="input-group">
-                <label>Height (px)</label>
-                <input type="number" id="heightInput">
-            </div>
-            <div class="checkbox-group">
-                <input type="checkbox" id="lockRatio" checked>
-                <label for="lockRatio">Lock Aspect Ratio</label>
-            </div>
-        </div>
-
-        <div class="actions">
-            <button class="btn-primary" onclick="processImage()">Preview Resize</button>
-            <a id="downloadLink" class="hidden"></a>
-            <button id="downloadBtn" class="btn-download" onclick="downloadImage()">Download Resized Image</button>
-        </div>
-
-        <div id="preview-container">
-            <h3>Preview</h3>
+    <div id="editor" class="workspace hidden">
+        <div class="preview-area">
             <canvas id="canvas"></canvas>
+        </div>
+
+        <div class="controls">
+            <div class="stats">
+                <span>In: <b id="sOrig">-</b></span>
+                <span>Out: <b id="sNew">-</b></span>
+            </div>
+
+            <div class="input-row">
+                <div class="input-group"><label>Width</label><input type="number" id="w"></div>
+                <div class="input-group"><label>Height</label><input type="number" id="h"></div>
+            </div>
+            
+            <label style="display:flex; align-items:center; gap:5px; text-transform:none;">
+                <input type="checkbox" id="lock" checked style="width:auto"> Lock Aspect Ratio
+            </label>
+
+            <div class="input-group">
+                <label>Social Media Presets</label>
+                <div class="preset-grid">
+                    <button class="btn-preset" onclick="setPreset(1080,1080)">Instagram</button>
+                    <button class="btn-preset" onclick="setPreset(1200,630)">Facebook</button>
+                    <button class="btn-preset" onclick="setPreset(1280,720)">YouTube</button>
+                    <button class="btn-preset" onclick="setPreset(1080,1920)">TikTok/Story</button>
+                </div>
+            </div>
+
+            <div class="input-row">
+                <div class="input-group">
+                    <label>Scale %</label>
+                    <select id="pct" onchange="applyPct(this.value)">
+                        <option value="1">100%</option>
+                        <option value="0.75">75%</option>
+                        <option value="0.5">50%</option>
+                        <option value="0.25">25%</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Format</label>
+                    <select id="fmt" onchange="render()">
+                        <option value="image/jpeg">JPEG</option>
+                        <option value="image/png">PNG</option>
+                        <option value="image/webp">WebP</option>
+                    </select>
+                </div>
+            </div>
+
+            <button class="btn-main" onclick="render()">Apply & Preview</button>
+            <button id="dl" class="btn-main" style="background:#10b981; display:none;" onclick="download()">Download Image</button>
+            <button class="btn-preset" style="width:100%" onclick="location.reload()">Reset Tool</button>
         </div>
     </div>
 </div>
 
 <script>
-    const fileInput = document.getElementById('fileInput');
-    const widthInput = document.getElementById('widthInput');
-    const heightInput = document.getElementById('heightInput');
-    const lockRatio = document.getElementById('lockRatio');
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-    
-    let originalImage = new Image();
-    let aspectRatio = 1;
+    let img = new Image(), ratio = 1;
+    const wIn = document.getElementById('w'), hIn = document.getElementById('h');
+    const canvas = document.getElementById('canvas'), ctx = canvas.getContext('2d');
 
-    fileInput.addEventListener('change', function(e) {
+    document.getElementById('fileInput').onchange = (e) => {
         const file = e.target.files[0];
-        if (!file) return;
-
+        if(!file) return;
+        document.getElementById('sOrig').innerText = (file.size/1024).toFixed(0)+'KB';
         const reader = new FileReader();
-        reader.onload = function(event) {
-            originalImage.onload = function() {
-                aspectRatio = originalImage.width / originalImage.height;
-                widthInput.value = originalImage.width;
-                heightInput.value = originalImage.height;
-                
+        reader.onload = (re) => {
+            img.onload = () => {
+                ratio = img.width / img.height;
+                wIn.value = img.width; hIn.value = img.height;
+                document.getElementById('dropZone').classList.add('hidden');
                 document.getElementById('editor').classList.remove('hidden');
-                document.getElementById('preview-container').style.display = 'none';
-                document.getElementById('downloadBtn').style.display = 'none';
+                render();
             };
-            originalImage.src = event.target.result;
+            img.src = re.target.result;
         };
         reader.readAsDataURL(file);
-    });
+    };
 
-    // Handle Aspect Ratio Locking
-    widthInput.addEventListener('input', () => {
-        if (lockRatio.checked) {
-            heightInput.value = Math.round(widthInput.value / aspectRatio);
-        }
-    });
+    wIn.oninput = () => { if(document.getElementById('lock').checked) hIn.value = Math.round(wIn.value / ratio); };
+    hIn.oninput = () => { if(document.getElementById('lock').checked) wIn.value = Math.round(hIn.value * ratio); };
 
-    heightInput.addEventListener('input', () => {
-        if (lockRatio.checked) {
-            widthInput.value = Math.round(heightInput.value * aspectRatio);
-        }
-    });
-
-    function processImage() {
-        const targetWidth = parseInt(widthInput.value);
-        const targetHeight = parseInt(heightInput.value);
-
-        if (!targetWidth || !targetHeight) return alert("Please enter valid dimensions");
-
-        canvas.width = targetWidth;
-        canvas.height = targetHeight;
-
-        // Draw and resize
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(originalImage, 0, 0, targetWidth, targetHeight);
-
-        document.getElementById('preview-container').style.display = 'block';
-        document.getElementById('downloadBtn').style.display = 'inline-block';
+    function setPreset(pw, ph) {
+        document.getElementById('lock').checked = false;
+        wIn.value = pw; hIn.value = ph; render();
     }
 
-    function downloadImage() {
-        const link = document.getElementById('downloadLink');
-        const format = originalImage.src.split(';')[0].split(':')[1] || 'image/png';
-        link.download = `resized-picpro-${Date.now()}.png`;
-        link.href = canvas.toDataURL(format, 0.9);
-        link.click();
+    function applyPct(p) {
+        wIn.value = Math.round(img.width * p);
+        hIn.value = Math.round(img.height * p);
+        render();
+    }
+
+    function render() {
+        canvas.width = wIn.value; canvas.height = hIn.value;
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const url = canvas.toDataURL(document.getElementById('fmt').value, 0.8);
+        const size = Math.round((url.length - 22) * 3 / 4);
+        document.getElementById('sNew').innerText = (size/1024).toFixed(0)+'KB';
+        document.getElementById('dl').style.display = 'block';
+    }
+
+    function download() {
+        const a = document.createElement('a');
+        const f = document.getElementById('fmt').value;
+        a.download = `picpro.${f.split('/')[1]}`;
+        a.href = canvas.toDataURL(f, 0.9);
+        a.click();
     }
 </script>
-
 </body>
 </html>
