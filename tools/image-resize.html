@@ -2,188 +2,343 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Image Resizer Pro - PicProTools</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PicProTools - High Fidelity Resizer</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pica/9.0.1/pica.min.js"></script>
+    
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        slate: { 850: '#1e293b', 900: '#0f172a', 950: '#020617' },
+                        primary: { 500: '#6366f1', 600: '#4f46e5' }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        :root {
-            --accent: #6366f1;
-            --bg: #0f172a;
-            --card: #1e293b;
-            --text: #f8fafc;
-            --dim: #94a3b8;
-        }
-
-        body { 
-            font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); 
-            margin: 0; padding: 10px; display: flex; justify-content: center;
-        }
-
-        .premium-container {
-            width: 100%; max-width: 1000px; background: var(--card);
-            border-radius: 20px; padding: 20px; box-sizing: border-box;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-        }
-
-        h1 { font-size: 1.5rem; margin: 0 0 15px 0; background: linear-gradient(to right, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align: center; }
-
-        /* Responsive Layout */
-        .workspace { display: flex; flex-direction: column; gap: 20px; }
-        @media (min-width: 850px) { .workspace { flex-direction: row; } }
-
-        .preview-area { flex: 1; min-width: 0; text-align: center; background: #000; border-radius: 12px; padding: 10px; display: flex; align-items: center; justify-content: center; min-height: 250px; }
-        canvas { max-width: 100%; max-height: 60vh; border-radius: 4px; }
-
-        .controls { width: 100%; max-width: 350px; margin: 0 auto; display: flex; flex-direction: column; gap: 15px; }
-
-        .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .input-group { display: flex; flex-direction: column; gap: 5px; }
-        label { font-size: 0.7rem; font-weight: bold; color: var(--dim); text-transform: uppercase; }
-
-        input, select { 
-            background: #0f172a; border: 1px solid #334155; color: white;
-            padding: 10px; border-radius: 8px; font-size: 0.9rem; width: 100%; box-sizing: border-box;
-        }
-
-        /* Preset Buttons */
-        .preset-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-        .btn-preset { 
-            background: #334155; border: none; color: white; padding: 8px; 
-            border-radius: 6px; font-size: 0.75rem; cursor: pointer; transition: 0.2s;
-        }
-        .btn-preset:hover { background: var(--accent); }
-
-        .stats { background: #0f172a; padding: 10px; border-radius: 8px; display: flex; justify-content: space-between; font-size: 0.8rem; }
-        
-        .btn-main { 
-            background: var(--accent); color: white; border: none; padding: 14px; 
-            border-radius: 10px; font-weight: bold; cursor: pointer; width: 100%;
-        }
-        
-        .upload-zone { border: 2px dashed #334155; padding: 40px 10px; text-align: center; border-radius: 15px; cursor: pointer; }
-        .hidden { display: none; }
+        [x-cloak] { display: none !important; }
+        /* Custom Scrollbar for preview */
+        .custom-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #1e293b; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
     </style>
 </head>
-<body>
+<body class="bg-slate-950 text-slate-50 min-h-screen flex items-center justify-center p-4 font-sans antialiased">
 
-<div class="premium-container">
-    <h1>PicPro Studio</h1>
-
-    <div id="dropZone" class="upload-zone" onclick="document.getElementById('fileInput').click()">
-        <p>Tap to upload image</p>
-        <span style="color:var(--dim); font-size: 0.8rem;">JPG, PNG, WebP</span>
-        <input type="file" id="fileInput" class="hidden" accept="image/*">
-    </div>
-
-    <div id="editor" class="workspace hidden">
-        <div class="preview-area">
-            <canvas id="canvas"></canvas>
+    <div x-data="imageResizer()" class="w-full max-w-6xl">
+        
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400 mb-2">
+                PicProTools
+            </h1>
+            <p class="text-slate-400 text-sm">Professional Lanczos3 Resizing (Browser-Based)</p>
         </div>
 
-        <div class="controls">
-            <div class="stats">
-                <span>In: <b id="sOrig">-</b></span>
-                <span>Out: <b id="sNew">-</b></span>
-            </div>
-
-            <div class="input-row">
-                <div class="input-group"><label>Width</label><input type="number" id="w"></div>
-                <div class="input-group"><label>Height</label><input type="number" id="h"></div>
-            </div>
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden relative">
             
-            <label style="display:flex; align-items:center; gap:5px; text-transform:none;">
-                <input type="checkbox" id="lock" checked style="width:auto"> Lock Aspect Ratio
-            </label>
+            <div x-show="isProcessing" class="absolute inset-0 z-50 bg-slate-900/90 flex flex-col items-center justify-center backdrop-blur-sm" x-transition x-cloak>
+                <svg class="animate-spin h-10 w-10 text-primary-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span class="text-primary-500 font-bold tracking-wider">PROCESSING HD...</span>
+            </div>
 
-            <div class="input-group">
-                <label>Social Media Presets</label>
-                <div class="preset-grid">
-                    <button class="btn-preset" onclick="setPreset(1080,1080)">Instagram</button>
-                    <button class="btn-preset" onclick="setPreset(1200,630)">Facebook</button>
-                    <button class="btn-preset" onclick="setPreset(1280,720)">YouTube</button>
-                    <button class="btn-preset" onclick="setPreset(1080,1920)">TikTok/Story</button>
+            <div x-show="step === 'upload'" class="p-12 text-center transition-all duration-300">
+                <div 
+                    @dragover.prevent="dragHover = true"
+                    @dragleave.prevent="dragHover = false"
+                    @drop.prevent="dragHover = false; handleFile($event.dataTransfer.files[0])"
+                    @click="$refs.fileInput.click()"
+                    :class="{'border-primary-500 bg-slate-800/50': dragHover, 'border-slate-700 hover:border-slate-600 hover:bg-slate-800/30': !dragHover}"
+                    class="border-2 border-dashed rounded-2xl p-16 cursor-pointer transition-all duration-200 group"
+                >
+                    <input x-ref="fileInput" type="file" class="hidden" accept="image/*" @change="handleFile($event.target.files[0])">
+                    
+                    <div class="mb-6 transform group-hover:scale-110 transition-transform duration-200">
+                        <svg class="w-20 h-20 mx-auto text-slate-500 group-hover:text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.587-1.587a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-slate-200 mb-2">Upload Image</h3>
+                    <p class="text-slate-500">JPG, PNG, WebP supported</p>
                 </div>
             </div>
 
-            <div class="input-row">
-                <div class="input-group">
-                    <label>Scale %</label>
-                    <select id="pct" onchange="applyPct(this.value)">
-                        <option value="1">100%</option>
-                        <option value="0.75">75%</option>
-                        <option value="0.5">50%</option>
-                        <option value="0.25">25%</option>
-                    </select>
+            <div x-show="step === 'editor'" class="grid grid-cols-1 lg:grid-cols-12 min-h-[600px]" x-cloak>
+                
+                <div class="lg:col-span-8 bg-black/40 p-6 flex flex-col items-center justify-center relative border-r border-slate-800">
+                    <div class="relative w-full h-full flex items-center justify-center custom-scroll overflow-auto">
+                        <canvas x-ref="previewCanvas" class="max-w-full max-h-[70vh] shadow-2xl rounded-lg"></canvas>
+                        
+                        <div x-show="!hasRendered" class="text-slate-500 text-sm absolute">
+                            Adjust settings to generate preview
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 flex items-center gap-4 text-xs font-mono text-slate-400 bg-slate-900 px-4 py-2 rounded-full border border-slate-800">
+                        <span>ORIGINAL: <span x-text="formatBytes(originalSize)"></span></span>
+                        <span class="text-slate-600">|</span>
+                        <span>OUTPUT: <span x-text="outputSize ? formatBytes(outputSize) : '...'" :class="{'text-green-400': outputSize < originalSize, 'text-yellow-400': outputSize >= originalSize}"></span></span>
+                    </div>
                 </div>
-                <div class="input-group">
-                    <label>Format</label>
-                    <select id="fmt" onchange="render()">
-                        <option value="image/jpeg">JPEG</option>
-                        <option value="image/png">PNG</option>
-                        <option value="image/webp">WebP</option>
-                    </select>
+
+                <div class="lg:col-span-4 bg-slate-900 p-6 flex flex-col gap-6 overflow-y-auto max-h-[80vh] custom-scroll">
+                    
+                    <div class="space-y-3">
+                        <label class="text-xs font-bold text-slate-500 tracking-wider uppercase">Dimensions</label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-[10px] text-slate-500 mb-1 block">WIDTH</label>
+                                <input type="number" x-model="width" @input="updateDims('w')" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-primary-500 focus:outline-none transition-colors">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-500 mb-1 block">HEIGHT</label>
+                                <input type="number" x-model="height" @input="updateDims('h')" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-primary-500 focus:outline-none transition-colors">
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" id="lock" x-model="lockRatio" class="rounded bg-slate-800 border-slate-700 text-primary-500 focus:ring-0 cursor-pointer">
+                            <label for="lock" class="text-xs text-slate-400 cursor-pointer select-none">Lock Aspect Ratio</label>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <label class="text-xs font-bold text-slate-500 tracking-wider uppercase">Quick Presets</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button @click="applyPreset(1080, 1080)" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 rounded-md text-xs text-slate-300 transition-colors">Instagram (Sq)</button>
+                            <button @click="applyPreset(1920, 1080)" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 rounded-md text-xs text-slate-300 transition-colors">Full HD</button>
+                            <button @click="applyPercentage(0.5)" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 rounded-md text-xs text-slate-300 transition-colors">50% Scale</button>
+                            <button @click="applyPercentage(0.25)" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 rounded-md text-xs text-slate-300 transition-colors">25% Scale</button>
+                        </div>
+                    </div>
+
+                    <hr class="border-slate-800">
+
+                    <div class="space-y-4">
+                        <label class="text-xs font-bold text-slate-500 tracking-wider uppercase">Export Settings</label>
+                        
+                        <div class="relative">
+                            <select x-model="format" class="w-full appearance-none bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-primary-500 focus:outline-none">
+                                <option value="image/jpeg">JPEG (Photographs)</option>
+                                <option value="image/png">PNG (Lossless/Transparent)</option>
+                                <option value="image/webp">WebP (Modern Optimized)</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
+                                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                            </div>
+                        </div>
+
+                        <div x-show="format !== 'image/png'" class="space-y-2">
+                            <div class="flex justify-between text-xs text-slate-400">
+                                <span>Quality</span>
+                                <span x-text="quality + '%'"></span>
+                            </div>
+                            <input type="range" x-model="quality" min="1" max="100" class="w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-primary-500">
+                        </div>
+
+                        <div class="flex items-center justify-between bg-slate-800/50 p-3 rounded-lg border border-slate-800">
+                            <span class="text-sm text-slate-300">Smart Sharpen</span>
+                            <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                                <input type="checkbox" x-model="sharpen" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer left-0 top-0 transition-transform duration-200" :class="{'translate-x-full border-primary-500': sharpen, 'border-slate-400': !sharpen}"/>
+                                <label class="toggle-label block overflow-hidden h-5 rounded-full bg-slate-700 cursor-pointer"></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-auto space-y-3 pt-6">
+                        <button @click="processImage()" class="w-full bg-primary-600 hover:bg-primary-500 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-primary-500/20 transition-all transform active:scale-95 flex items-center justify-center gap-2">
+                            <span>⚡ Render Preview</span>
+                        </button>
+
+                        <button x-show="hasRendered" @click="download()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-emerald-500/20 transition-all transform active:scale-95 flex items-center justify-center gap-2">
+                            <span>📥 Download Image</span>
+                        </button>
+
+                        <button @click="reset()" class="w-full bg-transparent border border-rose-500/30 text-rose-400 hover:bg-rose-500/10 font-semibold py-2 px-4 rounded-lg text-sm transition-colors">
+                            Restart / New Image
+                        </button>
+                    </div>
+
                 </div>
             </div>
+        </div>
 
-            <button class="btn-main" onclick="render()">Apply & Preview</button>
-            <button id="dl" class="btn-main" style="background:#10b981; display:none;" onclick="download()">Download Image</button>
-            <button class="btn-preset" style="width:100%" onclick="location.reload()">Reset Tool</button>
+        <div class="text-center mt-6 text-slate-600 text-xs">
+            &copy; 2026 PicProTools. Local processing only.
         </div>
     </div>
-</div>
 
-<script>
-    let img = new Image(), ratio = 1;
-    const wIn = document.getElementById('w'), hIn = document.getElementById('h');
-    const canvas = document.getElementById('canvas'), ctx = canvas.getContext('2d');
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('imageResizer', () => ({
+                step: 'upload',
+                dragHover: false,
+                isProcessing: false,
+                hasRendered: false,
+                
+                // Data
+                file: null,
+                originalImage: null, // The HTMLImageElement
+                originalWidth: 0,
+                originalHeight: 0,
+                originalSize: 0,
+                outputSize: 0,
+                
+                // Settings
+                width: 0,
+                height: 0,
+                lockRatio: true,
+                format: 'image/jpeg',
+                quality: 90,
+                sharpen: false,
+                
+                // Pica Instance
+                pica: null,
 
-    document.getElementById('fileInput').onchange = (e) => {
-        const file = e.target.files[0];
-        if(!file) return;
-        document.getElementById('sOrig').innerText = (file.size/1024).toFixed(0)+'KB';
-        const reader = new FileReader();
-        reader.onload = (re) => {
-            img.onload = () => {
-                ratio = img.width / img.height;
-                wIn.value = img.width; hIn.value = img.height;
-                document.getElementById('dropZone').classList.add('hidden');
-                document.getElementById('editor').classList.remove('hidden');
-                render();
-            };
-            img.src = re.target.result;
-        };
-        reader.readAsDataURL(file);
-    };
+                init() {
+                    // Initialize Pica with webworkers enabled for speed
+                    this.pica = window.pica({ features: ['js', 'wasm', 'cib'] });
+                },
 
-    wIn.oninput = () => { if(document.getElementById('lock').checked) hIn.value = Math.round(wIn.value / ratio); };
-    hIn.oninput = () => { if(document.getElementById('lock').checked) wIn.value = Math.round(hIn.value * ratio); };
+                formatBytes(bytes, decimals = 2) {
+                    if (!+bytes) return '0 Bytes';
+                    const k = 1024;
+                    const dm = decimals < 0 ? 0 : decimals;
+                    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                    const i = Math.floor(Math.log(bytes) / Math.log(k));
+                    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+                },
 
-    function setPreset(pw, ph) {
-        document.getElementById('lock').checked = false;
-        wIn.value = pw; hIn.value = ph; render();
-    }
+                handleFile(file) {
+                    if (!file || !file.type.match('image.*')) return;
+                    
+                    this.file = file;
+                    this.originalSize = file.size;
+                    
+                    // Smart Format Detection
+                    if(file.type === 'image/png') this.format = 'image/png';
+                    else if(file.type === 'image/webp') this.format = 'image/webp';
+                    else this.format = 'image/jpeg';
 
-    function applyPct(p) {
-        wIn.value = Math.round(img.width * p);
-        hIn.value = Math.round(img.height * p);
-        render();
-    }
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        this.originalImage = new Image();
+                        this.originalImage.onload = () => {
+                            this.originalWidth = this.originalImage.width;
+                            this.originalHeight = this.originalImage.height;
+                            
+                            // Set initial inputs
+                            this.width = this.originalWidth;
+                            this.height = this.originalHeight;
+                            
+                            this.step = 'editor';
+                            
+                            // Initial quick render
+                            this.$nextTick(() => {
+                                this.processImage();
+                            });
+                        };
+                        this.originalImage.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                },
 
-    function render() {
-        canvas.width = wIn.value; canvas.height = hIn.value;
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        const url = canvas.toDataURL(document.getElementById('fmt').value, 0.8);
-        const size = Math.round((url.length - 22) * 3 / 4);
-        document.getElementById('sNew').innerText = (size/1024).toFixed(0)+'KB';
-        document.getElementById('dl').style.display = 'block';
-    }
+                updateDims(type) {
+                    if (!this.lockRatio) return;
+                    const ratio = this.originalWidth / this.originalHeight;
+                    if (type === 'w') {
+                        this.height = Math.round(this.width / ratio);
+                    } else {
+                        this.width = Math.round(this.height * ratio);
+                    }
+                },
 
-    function download() {
-        const a = document.createElement('a');
-        const f = document.getElementById('fmt').value;
-        a.download = `picpro.${f.split('/')[1]}`;
-        a.href = canvas.toDataURL(f, 0.9);
-        a.click();
-    }
-</script>
+                applyPreset(w, h) {
+                    this.lockRatio = false;
+                    this.width = w;
+                    this.height = h;
+                    // Auto process on preset click for snappy feel
+                    this.processImage();
+                },
+
+                applyPercentage(pct) {
+                    this.lockRatio = true;
+                    this.width = Math.round(this.originalWidth * pct);
+                    this.height = Math.round(this.originalHeight * pct);
+                    this.processImage();
+                },
+
+                async processImage() {
+                    if (!this.originalImage) return;
+                    this.isProcessing = true;
+
+                    // Small delay to let UI show loading state
+                    await new Promise(r => setTimeout(r, 50));
+
+                    try {
+                        const canvas = this.$refs.previewCanvas;
+                        
+                        // 1. Resize using Pica (High Quality Lanczos3)
+                        canvas.width = this.width;
+                        canvas.height = this.height;
+                        
+                        await this.pica.resize(this.originalImage, canvas, {
+                            unsharpAmount: this.sharpen ? 80 : 0, // Pica has built-in unsharp mask!
+                            unsharpRadius: 0.6,
+                            unsharpThreshold: 2
+                        });
+
+                        // 2. Calculate Size estimation
+                        // We use toBlob to get the real size info
+                        const blob = await this.pica.toBlob(canvas, this.format, this.quality / 100);
+                        this.outputSize = blob.size;
+                        this.hasRendered = true;
+
+                    } catch (err) {
+                        console.error("Resize failed", err);
+                        alert("Error processing image. The dimensions might be too large for this device.");
+                    } finally {
+                        this.isProcessing = false;
+                    }
+                },
+
+                async download() {
+                    if(!this.hasRendered) return;
+                    
+                    const canvas = this.$refs.previewCanvas;
+                    const blob = await this.pica.toBlob(canvas, this.format, this.quality / 100);
+                    
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    
+                    // Generate nice filename
+                    const ext = this.format.split('/')[1];
+                    const timestamp = new Date().getTime();
+                    link.download = `PicPro_${this.width}x${this.height}_${timestamp}.${ext}`;
+                    
+                    link.href = url;
+                    link.click();
+                    URL.revokeObjectURL(url);
+                },
+
+                reset() {
+                    this.step = 'upload';
+                    this.file = null;
+                    this.originalImage = null;
+                    this.hasRendered = false;
+                    this.outputSize = 0;
+                    // Reset file input value so same file can be selected again
+                    this.$refs.fileInput.value = '';
+                }
+            }));
+        });
+    </script>
 </body>
 </html>
